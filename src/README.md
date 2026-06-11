@@ -3,7 +3,7 @@
 - [x] Renderer class
 - [x] Shader class
 - [x] Custom texture
-- [] Game class
+- [x] Game class
 - [] More cubes (Mesh class)
 - [] Face culling
 

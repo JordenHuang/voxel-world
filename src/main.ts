@@ -1,14 +1,5 @@
-import { mat4, vec3, vec4 } from "gl-matrix";
-import vsSource from "./cube.vs?raw";
-import fsSource from "./cube.fs?raw";
-// import { initShaderProgram } from "./shader.js";
 import { initBuffers } from "./init-buffers.js";
-// import { drawScene } from "./draw-scene.js";
-import { Camera } from "./camera";
-import { Player } from "./player";
-import { InputManager } from "./input-manager";
-import { Renderer } from "./renderer";
-import { Shader } from "./shader";
+import { Game } from "./game";
 
 let cubeRotation = 0.0;
 
@@ -51,68 +42,13 @@ function loadTexture(gl: WebGLRenderingContext, url: string): WebGLTexture {
 
 // main function (using IIFE, Immediately Invoked Function Expression)
 (function main() {
-  const canvas = document.getElementById("game-canvas") as HTMLCanvasElement;
-  if (canvas === null) {
-    alert("Unable to locate canvas element.");
-    return;
-  }
-
-  const gl = canvas.getContext("webgl") as WebGLRenderingContext;
-  if (gl === null) {
-    alert("Unable to initialize WebGL. Your browser or machine may not support it.");
-    return;
-  }
-
-  const bgColor = vec4.fromValues(
-    135 / 255,
-    206 / 255,
-    235 / 255,
-    255 / 255
-  );
-
-  gl.clearColor(bgColor[0], bgColor[1], bgColor[2], bgColor[3]);
-  gl.clear(gl.COLOR_BUFFER_BIT);
-
-  let shader = new Shader(gl, vsSource, fsSource);
+  const game = new Game();
 
   // Here's where we call the routine that builds all the
   // objects we'll be drawing.
-  const buffers = initBuffers(gl);
+  const buffers = initBuffers(game.getGl());
+  let texture = loadTexture(game.getGl(), "./assets/placeholder.png");
 
-  let player = new Player(gl.canvas.width / gl.canvas.height);
-  let input = new InputManager(canvas);
-  let renderer = new Renderer(gl);
-
-  // Draw the scene
-  // let camera = new Camera(gl.canvas.width / gl.canvas.height);
-  // drawScene(gl, programInfo, buffers, cubeRotation, player.camera.getViewMatrix());
-
-  // let texture = loadTexture(gl, "./assets/news.jpg");
-  let texture = loadTexture(gl, "./assets/placeholder.png");
-  renderer.draw(shader, buffers, player.camera.getViewMatrix(), player.camera.getProjectionMatrix(), texture);
-
-  let previousTimestamp = 0;
-  let deltaTime = 0;
-
-  // Draw the scene repeatedly
-  function gameLoop(timestamp: number) {
-    deltaTime = timestamp - previousTimestamp;
-    previousTimestamp = timestamp;
-    // console.log(deltaTime);
-
-    player.update(deltaTime, input);
-
-    // updateCamera(verticalAngle, horizontalAngle, position);
-    // drawScene(gl, programInfo, buffers, cubeRotation, player.camera.getViewMatrix());
-  renderer.draw(shader, buffers, player.camera.getViewMatrix(), player.camera.getProjectionMatrix(), texture);
-
-    // cubeRotation += deltaTime * 0.001; // convert deltaTime to seconds
-    // console.log(...position);
-
-    input.clearFrameData();
-    requestAnimationFrame(gameLoop);
-  }
-
-  requestAnimationFrame(gameLoop);
+  game.start(buffers, texture);
 })();
 
