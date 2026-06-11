@@ -3,8 +3,8 @@ import { Player } from "./player";
 import { InputManager } from "./input-manager";
 import { Renderer } from "./renderer";
 import { Shader } from "./shader";
-import vsSource from "./shaders/cube.vs?raw";
-import fsSource from "./shaders/cube.fs?raw";
+import vsSource from "./shaders/cube.vert?raw";
+import fsSource from "./shaders/cube.frag?raw";
 
 
 export class Game {
