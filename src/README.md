@@ -1,11 +1,16 @@
 
 ## TODO
+- [] Integer coordinate is at the edge of block, not center
+- [] More cubes (Mesh class, Chunk class, World class, (Model class ?))
+- [] Face culling
+### 2026-06-12
+- Mesh interface
+- Model class
+### 2026-06-11
 - [x] Renderer class
 - [x] Shader class
 - [x] Custom texture
 - [x] Game class
-- [] More cubes (Mesh class)
-- [] Face culling
 
 
 ## References:

@@ -9,7 +9,7 @@ import fsSource from "./shaders/cube.frag?raw";
 
 export class Game {
   private canvas: HTMLCanvasElement;
-  private gl: WebGLRenderingContext;
+  private _gl: WebGLRenderingContext;
   private inputManager: InputManager;
   private player: Player;
   private renderer: Renderer;
@@ -23,16 +23,16 @@ export class Game {
       throw new Error("Unable to locate canvas element.");
     }
 
-    this.gl = this.canvas.getContext("webgl") as WebGLRenderingContext;
-  if (this.gl === null) {
+    this._gl = this.canvas.getContext("webgl") as WebGLRenderingContext;
+  if (this._gl === null) {
       throw new Error("Unable to initialize WebGL. Your browser or machine may not support it.");
   }
 
     // 初始化子系統
     this.inputManager = new InputManager(this.canvas);
-    this.player = new Player(this.gl.canvas.width / this.gl.canvas.height);
-    this.renderer = new Renderer(this.gl);
-    this.shader = new Shader(this.gl, vsSource, fsSource);
+    this.player = new Player(this._gl.canvas.width / this._gl.canvas.height);
+    this.renderer = new Renderer(this._gl);
+    this.shader = new Shader(this._gl, vsSource, fsSource);
     // this.world = new World();
   }
 
@@ -50,8 +50,9 @@ export class Game {
     this.inputManager.clearFrameData();
   }
 
+  // TODO: rename `buffers`
   private render(buffers: any, texture: WebGLTexture) {
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+    this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
     // 呼叫渲染器畫出世界...
     this.renderer.draw(this.shader, buffers, this.player.camera.getViewMatrix(), this.player.camera.getProjectionMatrix(), texture);
   }
@@ -76,11 +77,11 @@ export class Game {
       255 / 255
     );
 
-    this.gl.clearColor(bgColor[0], bgColor[1], bgColor[2], bgColor[3]);
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    this._gl.clearColor(bgColor[0], bgColor[1], bgColor[2], bgColor[3]);
+    this._gl.clear(this._gl.COLOR_BUFFER_BIT);
 
     requestAnimationFrame((timestamp) => this.gameLoop(timestamp, buffers, texture));
   }
 
-  public getGl() { return this.gl };
+  get gl() { return this._gl };
 }

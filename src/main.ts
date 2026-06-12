@@ -1,5 +1,7 @@
-import { initBuffers } from "./init-buffers.js";
+// import { initBuffers } from "./init-buffers.js";
 import { Game } from "./game";
+import { CubeMesh } from "./meshes/cube-mesh";
+import { Model } from "./meshes/model";
 
 let cubeRotation = 0.0;
 
@@ -46,9 +48,12 @@ function loadTexture(gl: WebGLRenderingContext, url: string): WebGLTexture {
 
   // Here's where we call the routine that builds all the
   // objects we'll be drawing.
-  const buffers = initBuffers(game.getGl());
-  let texture = loadTexture(game.getGl(), "./assets/placeholder.png");
+  // const buffers = initBuffers(game.gl);
+  let texture = loadTexture(game.gl, "./assets/placeholder.png");
 
-  game.start(buffers, texture);
+  let cubeModel = new Model(game.gl, CubeMesh, true);
+
+  // game.start(buffers, texture);
+  game.start(cubeModel, texture);
 })();
 

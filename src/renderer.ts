@@ -1,5 +1,6 @@
 import { mat4 } from "gl-matrix";
 import { Shader } from "./shader";
+import { Model } from "./meshes/model";
 
 export class Renderer {
   private gl: WebGLRenderingContext;
@@ -15,7 +16,7 @@ export class Renderer {
   }
 
   // 這裡的 texture 就是我們剛剛 loadTexture 回傳的東西
-  public draw(shader: Shader, buffers: any, viewMatrix: mat4, projectionMatrix: mat4, texture: WebGLTexture) {
+  public draw(shader: Shader, model: Model, viewMatrix: mat4, projectionMatrix: mat4, texture: WebGLTexture) {
     const gl = this.gl;
 
     // Clear the canvas before we start drawing on it.
@@ -40,7 +41,7 @@ export class Renderer {
     gl.uniformMatrix4fv(shader.uniforms["uModelViewMatrix"] as WebGLUniformLocation, false, this.modelViewMatrix);
 
     // 5. 綁定頂點、紋理座標、與實體紋理
-    this.bindBuffers(buffers, shader);
+    this.bindBuffers(model, shader);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -49,22 +50,23 @@ export class Renderer {
     // 6. 繪製
     const drawWireframe = false; // 設定一個開關來方便你除錯
 
-    if (drawWireframe) {
-      // 綁定線框專用的 Buffer
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.wireframeIndices);
-      gl.drawElements(gl.LINES, 60, gl.UNSIGNED_SHORT, 0);
+    if (drawWireframe && model.wireframeBuffer !== undefined) {
+      gl.bindTexture(gl.TEXTURE_2D, null);
+      // // 綁定線框專用的 Buffer
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, model.wireframeBuffer);
+      gl.drawElements(gl.LINES, model.wireframeVertexCount as number, gl.UNSIGNED_SHORT, 0);
     } else {
       // 原本畫實體方塊的邏輯
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, model.indicesBuffer);
       gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
     }
   }
 
-  private bindBuffers(buffers: any, shader: Shader) {
+  private bindBuffers(model: Model, shader: Shader) {
     const gl = this.gl;
 
     // 1. 綁定 Position (把方塊的形狀傳給 GPU)
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+    gl.bindBuffer(gl.ARRAY_BUFFER, model.positionsBuffer);
     gl.vertexAttribPointer(
       shader.attributes["aVertexPosition"] as GLint,
       3, // 每次取 3 個數字 (x, y, z)
@@ -78,7 +80,7 @@ export class Renderer {
     );
 
     // 2. 綁定 Texture Coord (把圖片的 UV 座標傳給 GPU)
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.texture);
+    gl.bindBuffer(gl.ARRAY_BUFFER, model.uvsBuffer);
     gl.vertexAttribPointer(
       shader.attributes["aTextureCoord"] as GLint, 
       2, // 每次取 2 個數字 (u, v)
