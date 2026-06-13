@@ -24,13 +24,13 @@ export class Renderer {
 
     // 2. 計算模型矩陣
     mat4.identity(this.modelMatrix); // 每次重置為單位矩陣
-    // Now move the drawing position a bit to where we want to
-    // start drawing the square.
-    mat4.translate(
-      this.modelMatrix, // destination matrix
-      this.modelMatrix, // matrix to translate
-      [-0.0, 0.0, -6.0],
-    ); // amount to translate
+    // // Now move the drawing position a bit to where we want to
+    // // start drawing the square.
+    // mat4.translate(
+    //   this.modelMatrix, // destination matrix
+    //   this.modelMatrix, // matrix to translate
+    //   [-0.0, 0.0, -6.0],
+    // ); // amount to translate
 
     // 3. 矩陣相乘 (利用預先分配的 modelViewMatrix 來接收結果，達成 Zero Allocation)
     mat4.mul(this.modelViewMatrix, viewMatrix, this.modelMatrix);
@@ -58,7 +58,7 @@ export class Renderer {
     } else {
       // 原本畫實體方塊的邏輯
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, model.indicesBuffer);
-      gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+      gl.drawElements(gl.TRIANGLES, model.vertexCount, gl.UNSIGNED_SHORT, 0);
     }
   }
 
