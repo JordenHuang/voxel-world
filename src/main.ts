@@ -3,6 +3,7 @@ import { Game } from "./game";
 import { CubeMesh } from "./meshes/cube-mesh";
 import { Model } from "./meshes/model";
 import { Chunk } from "./meshes/chunk";
+import { World } from "./meshes/world";
 
 let cubeRotation = 0.0;
 
@@ -50,16 +51,18 @@ function loadTexture(gl: WebGLRenderingContext, url: string): WebGLTexture {
   // Here's where we call the routine that builds all the
   // objects we'll be drawing.
   // const buffers = initBuffers(game.gl);
-  let texture = loadTexture(game.gl, "./assets/placeholder.png");
+  let texture = loadTexture(game.getGl(), "./assets/placeholder.png");
 
   // let cubeModel = new Model(game.gl, CubeMesh, true);
   //
-  const myChunk = new Chunk();
-  const chunkMeshData = myChunk.generateMesh(); 
-  const chunkGPUModel = new Model(game.gl, chunkMeshData, true);
+  // const myChunk = new Chunk();
+  // const chunkMeshData = myChunk.generateMesh(); 
+  // const chunkGPUModel = new Model(game.gl, chunkMeshData, true);
 
   // game.start(buffers, texture);
   // game.start(cubeModel, texture);
-  game.start(chunkGPUModel, texture);
+  // game.start(chunkGPUModel, texture);
+
+  game.start(null, texture);
 })();
 

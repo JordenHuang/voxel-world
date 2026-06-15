@@ -3,18 +3,20 @@ import { Player } from "./player";
 import { InputManager } from "./input-manager";
 import { Renderer } from "./renderer";
 import { Shader } from "./shader";
+import { World } from "./meshes/world";
+import { Model } from "./meshes/model";
 import vsSource from "./shaders/cube.vert?raw";
 import fsSource from "./shaders/cube.frag?raw";
 
 
 export class Game {
   private canvas: HTMLCanvasElement;
-  private _gl: WebGLRenderingContext;
+  private gl: WebGLRenderingContext;
   private inputManager: InputManager;
   private player: Player;
   private renderer: Renderer;
   private shader: Shader;
-  // private world: World; // 未來的 Chunk 管理器
+  private world: World; // 未來的 Chunk 管理器
   private isPaused: boolean = false;
 
   constructor() {
@@ -23,17 +25,17 @@ export class Game {
       throw new Error("Unable to locate canvas element.");
     }
 
-    this._gl = this.canvas.getContext("webgl") as WebGLRenderingContext;
-  if (this._gl === null) {
+    this.gl = this.canvas.getContext("webgl") as WebGLRenderingContext;
+    if (this.gl === null) {
       throw new Error("Unable to initialize WebGL. Your browser or machine may not support it.");
-  }
+    }
 
     // 初始化子系統
     this.inputManager = new InputManager(this.canvas);
-    this.player = new Player(this._gl.canvas.width / this._gl.canvas.height);
-    this.renderer = new Renderer(this._gl);
-    this.shader = new Shader(this._gl, vsSource, fsSource);
-    // this.world = new World();
+    this.player = new Player(this.gl.canvas.width / this.gl.canvas.height);
+    this.renderer = new Renderer(this.gl);
+    this.shader = new Shader(this.gl, vsSource, fsSource);
+    this.world = new World(0, this.player.position);
   }
 
   // 協調各個子系統更新
@@ -44,7 +46,7 @@ export class Game {
     this.player.update(deltaTime, this.inputManager);
 
     // 2. 更新世界狀態（例如哪些 Chunk 需要加載）
-    // this.world.update(this.player.position);
+    this.world.update(this.gl, this.player.position);
 
     // 3. 後續處理：清空滑鼠單次點擊狀態
     this.inputManager.clearFrameData();
@@ -52,9 +54,13 @@ export class Game {
 
   // TODO: rename `buffers`
   private render(buffers: any, texture: WebGLTexture) {
-    this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
     // 呼叫渲染器畫出世界...
-    this.renderer.draw(this.shader, buffers, this.player.camera.getViewMatrix(), this.player.camera.getProjectionMatrix(), texture);
+    // this.renderer.draw(this.shader, buffers, this.player.camera.getViewMatrix(), this.player.camera.getProjectionMatrix(), texture);
+
+    for (const chunk of this.world.getChunks().values()) {
+      this.renderer.draw(this.shader, chunk.getChunkModel() as Model, this.player.camera.getViewMatrix(), this.player.camera.getProjectionMatrix(), texture);
+    }
   }
 
   private lastTimestamp = 0;
@@ -63,9 +69,13 @@ export class Game {
     this.lastTimestamp = timestamp;
 
     this.update(deltaTime);
+
     this.render(buffers, texture);
 
-    requestAnimationFrame((timestamp) => this.gameLoop(timestamp, buffers, texture));
+    const fpsLabel = document.getElementById("fps-label") as HTMLCanvasElement;
+    fpsLabel.innerText = `FPS: ${Math.round(1/deltaTime*1000)}`;
+
+    requestAnimationFrame((timestamp) => this.gameLoop(timestamp, null, texture));
   }
 
   // Entry point
@@ -77,11 +87,11 @@ export class Game {
       255 / 255
     );
 
-    this._gl.clearColor(bgColor[0], bgColor[1], bgColor[2], bgColor[3]);
-    this._gl.clear(this._gl.COLOR_BUFFER_BIT);
+    this.gl.clearColor(bgColor[0], bgColor[1], bgColor[2], bgColor[3]);
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
     requestAnimationFrame((timestamp) => this.gameLoop(timestamp, buffers, texture));
   }
 
-  get gl() { return this._gl };
+  public getGl() { return this.gl };
 }

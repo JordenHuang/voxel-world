@@ -20,7 +20,7 @@ export class Renderer {
     const gl = this.gl;
 
     // Clear the canvas before we start drawing on it.
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // 2. 計算模型矩陣
     mat4.identity(this.modelMatrix); // 每次重置為單位矩陣
@@ -48,7 +48,7 @@ export class Renderer {
     gl.uniform1i(shader.uniforms["uSampler"] as WebGLUniformLocation, 0); // 告訴 Shader 圖片在 TEXTURE0
 
     // 6. 繪製
-    const drawWireframe = false; // 設定一個開關來方便你除錯
+    const drawWireframe = true; // 設定一個開關來方便你除錯
 
     if (drawWireframe && model.wireframeBuffer !== undefined) {
       gl.bindTexture(gl.TEXTURE_2D, null);

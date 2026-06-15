@@ -1,177 +1,90 @@
+import { mat4, vec3, vec4 } from "gl-matrix";
 import type { Mesh } from "./mesh";
+import { Model } from "./model";
+import { World } from "./world";
 import { CubeMesh } from "./cube-mesh";
+import { ChunkMeshBuilder } from "./chunk-mesh-builder";
+import { type WorldInfo } from "./world";
+
+export type ChunkPos = {x: number, z: number};
+export type ChunkPosHash = string;
+
+export function calculateChunkPosHash(chunkPos: ChunkPos): string {
+  return `${chunkPos.x},${chunkPos.z}`;
+}
+
+export function extractChunkPosFromHash(hash: ChunkPosHash): ChunkPos {
+  const items = hash.split(',');
+  return {x: Number(items[0]), z: Number(items[1])};
+}
 
 export class Chunk {
-  public static readonly SIZE = 16;
-  public static readonly HEIGHT = 256;
-  
+  // public static readonly SIZE = 16;
+  // public static readonly HEIGHT = 256;
+
+  private chunkPosHash: ChunkPosHash;
+
+  private needRedraw: boolean = true;
+
   // 0 = 空氣, 1 = 實體方塊
+  // TODO: Should stores block id
   private blocks: Uint8Array;
 
-  constructor() {
-    const volume = Chunk.SIZE * Chunk.HEIGHT * Chunk.SIZE;
+  private chunkMesh: Mesh | null = null; // Used as key in world.chunks
+  private chunkModel: Model | null = null;
+
+  constructor(worldInfo: WorldInfo, chunkPosHash: ChunkPosHash) {
+    const size = worldInfo.CHUNK_SIZE;
+    const height = worldInfo.CHUNK_HEIGHT;
+    const volume = size * height * size;
+
     this.blocks = new Uint8Array(volume);
+    this.chunkPosHash = chunkPosHash;
 
     // 測試：生成一個簡單的地板
-    for (let x = 0; x < Chunk.SIZE; x++) {
-      for (let z = 0; z < Chunk.SIZE; z++) {
-        for (let y = 0; y < 3; y++) {
-          this.setBlock(x, y, z, 1);
+    for (let x = 0; x < size; x++) {
+      for (let z = 0; z < size; z++) {
+        for (let y = 0; y < height; y++) {
+          this.setBlock(worldInfo, x, y, z, 1);
         }
       }
     }
   }
 
-  private getIndex(x: number, y: number, z: number): number {
-    return x + (z * Chunk.SIZE) + (y * Chunk.SIZE * Chunk.SIZE);
+  private isValidIndex(worldInfo: WorldInfo, x: number, y: number, z: number): boolean {
+    return !(x < 0 || x >= worldInfo.CHUNK_SIZE
+      || y < 0 || y >= worldInfo.CHUNK_HEIGHT
+      || z < 0 || z >= worldInfo.CHUNK_SIZE);
   }
 
-  public getBlock(x: number, y: number, z: number): number {
-    if (x < 0 || x >= Chunk.SIZE || y < 0 || y >= Chunk.HEIGHT || z < 0 || z >= Chunk.SIZE) {
+  private getIndex(worldInfo: WorldInfo, x: number, y: number, z: number): number {
+    return x + (z * worldInfo.CHUNK_SIZE) + (y * worldInfo.CHUNK_SIZE * worldInfo.CHUNK_SIZE);
+  }
+
+  public getBlock(worldInfo: WorldInfo, x: number, y: number, z: number): number {
+    if (!this.isValidIndex(worldInfo, x, y, z)) {
       return 0; // 超出邊界視為空氣 (未來這裡要向相鄰的 Chunk 查詢)
     }
-    return this.blocks[this.getIndex(x, y, z)] as number;
+    return this.blocks[this.getIndex(worldInfo, x, y, z)] as number;
   }
 
-  public setBlock(x: number, y: number, z: number, id: number) {
-    if (x >= 0 && x < Chunk.SIZE && y >= 0 && y < Chunk.HEIGHT && z >= 0 && z < Chunk.SIZE) {
-      this.blocks[this.getIndex(x, y, z)] = id;
+  public setBlock(worldInfo: WorldInfo, x: number, y: number, z: number, id: number) {
+    if (this.isValidIndex(worldInfo, x, y, z)) {
+      this.blocks[this.getIndex(worldInfo, x, y, z)] = id;
+      this.needRedraw = true;
     }
   }
 
-public generateMesh(): Mesh {
-    const vertices: number[] = [];
-    const indices: number[] = [];
-    const uvs: number[] = [];
-    let vertexCounter = 0;
-    const NO_FACE_CULLING: boolean = false;
+  public getChunkPos() { return this.chunkPosHash; }
+  public getChunkModel() { return this.chunkModel; }
+  public getNeedRedraw() { return this.needRedraw; }
 
-    // 走訪 Chunk 內的每一個方塊
-    for (let y = 0; y < Chunk.HEIGHT; y++) {
-      for (let z = 0; z < Chunk.SIZE; z++) {
-        for (let x = 0; x < Chunk.SIZE; x++) {
-
-          if (this.getBlock(x, y, z) === 0) continue;
-
-          if (NO_FACE_CULLING) {
-            const vertexOffset = vertices.length / 3;
-
-            // 2. 推入加上空間位移的頂點座標
-            for (let i = 0; i < CubeMesh.positions.length; i += 3) {
-              vertices.push(CubeMesh.positions[i]! + x);
-              vertices.push(CubeMesh.positions[i+1]! + y);
-              vertices.push(CubeMesh.positions[i+2]! + z);
-            }
-
-            // 3. 推入 UV 座標
-            uvs.push(...CubeMesh.uvs);
-
-            // 🌟 4. 推入索引，並加上剛剛記錄好的偏移量
-            // 這裡直接一個一個推入即可，不需要 i += 3，因為我們就是要遍歷所有的索引
-            for (let i = 0; i < CubeMesh.indices.length; i++) {
-              indices.push(CubeMesh.indices[i]! + vertexOffset);
-            }
-          } else {
-            // Front
-            if (this.getBlock(x, y, z+1) == 0) { // If neighbor is air
-              vertices.push(
-                x+1, y+0, z+1,
-                x+1, y+1, z+1,
-                x+0, y+1, z+1,
-                x+0, y+0, z+1,
-              );
-              uvs.push(1,0, 1,1, 0,1, 0,0);
-              indices.push(
-                vertexCounter + 0, vertexCounter + 1, vertexCounter + 2,
-                vertexCounter + 0, vertexCounter + 2, vertexCounter + 3
-              );
-              vertexCounter += 4;
-            }
-            // Back
-            if (this.getBlock(x, y, z-1) == 0) {
-              vertices.push(
-                x+0, y+0, z+0,
-                x+0, y+1, z+0,
-                x+1, y+1, z+0,
-                x+1, y+0, z+0,
-              );
-              uvs.push(1,0, 1,1, 0,1, 0,0);
-              indices.push(
-                vertexCounter + 0, vertexCounter + 1, vertexCounter + 2,
-                vertexCounter + 0, vertexCounter + 2, vertexCounter + 3
-              );
-              vertexCounter += 4;
-            }
-            // Top
-            if (this.getBlock(x, y+1, z) == 0) {
-              vertices.push(
-                x+1, y+1, z+1,
-                x+1, y+1, z+0,
-                x+0, y+1, z+0,
-                x+0, y+1, z+1,
-              );
-              uvs.push(1,0, 1,1, 0,1, 0,0);
-              indices.push(
-                vertexCounter + 0, vertexCounter + 1, vertexCounter + 2,
-                vertexCounter + 0, vertexCounter + 2, vertexCounter + 3
-              );
-              vertexCounter += 4;
-            }
-            // Bottom
-            if (this.getBlock(x, y-1, z) == 0) {
-              vertices.push(
-                x+1, y+0, z+0,
-                x+1, y+0, z+1,
-                x+0, y+0, z+1,
-                x+0, y+0, z+0,
-              );
-              uvs.push(1,0, 1,1, 0,1, 0,0);
-              indices.push(
-                vertexCounter + 0, vertexCounter + 1, vertexCounter + 2,
-                vertexCounter + 0, vertexCounter + 2, vertexCounter + 3
-              );
-              vertexCounter += 4;
-            }
-            // Right
-            if (this.getBlock(x+1, y, z) == 0) {
-              vertices.push(
-                x+1, y+0, z+0,
-                x+1, y+1, z+0,
-                x+1, y+1, z+1,
-                x+1, y+0, z+1,
-              );
-              uvs.push(1,0, 1,1, 0,1, 0,0);
-              indices.push(
-                vertexCounter + 0, vertexCounter + 1, vertexCounter + 2,
-                vertexCounter + 0, vertexCounter + 2, vertexCounter + 3
-              );
-              vertexCounter += 4;
-            }
-            // Left
-            if (this.getBlock(x-1, y, z) == 0) {
-              vertices.push(
-                x+0, y+0, z+1,
-                x+0, y+1, z+1,
-                x+0, y+1, z+0,
-                x+0, y+0, z+0,
-              );
-              uvs.push(1,0, 1,1, 0,1, 0,0);
-              indices.push(
-                vertexCounter + 0, vertexCounter + 1, vertexCounter + 2,
-                vertexCounter + 0, vertexCounter + 2, vertexCounter + 3
-              );
-              vertexCounter += 4;
-            }
-
-          }
-        }
-      }
+  public update(gl: WebGLRenderingContext, world: World) {
+    const SHOW_WIREFRAME = false;
+    if (this.needRedraw) {
+      this.chunkMesh = ChunkMeshBuilder.build(this, world);
+      this.chunkModel = new Model(gl, this.chunkMesh, SHOW_WIREFRAME);
+      this.needRedraw = false;
     }
-
-    return {
-      positions: vertices,
-      indices: indices,
-      uvs: uvs
-    };
   }
 }

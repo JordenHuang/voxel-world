@@ -1,11 +1,20 @@
 
 ## TODO
-- [] Integer coordinate is at the edge of block, not center
-- [] More cubes (Mesh class, Chunk class, World class, (Model class ?))
-- [] Face culling
+- [] load/off load chunks
+- [] frustum culling
+- [] world generation
+
+### 2026-06-16
+- [x] More cubes (Mesh class, Chunk class, World class, (Model class ?))
+  - Model class: Handlek WebGL buffers
+  - Chunk class: Manage blocks
+  - World class: Manage chunks
+  - ChunkMeshBuilder class: Build chunk mesh dynamically
+- [x] Face culling
 ### 2026-06-12
 - Mesh interface
 - Model class
+- [x] Integer coordinate is at the edge of block, not center
 ### 2026-06-11
 - [x] Renderer class
 - [x] Shader class
@@ -20,4 +29,5 @@
 - Hot reload in WSL2: https://stackoverflow.com/questions/74625283/vue3-vite-hot-reload-hmr-no-working-in-the-browser
 - Texture `news.jpg`: https://pixabay.com/illustrations/cardinal-directions-directions-6372089/
 - Texture `placeholder.png`: https://openclipart.org/detail/244429/texture-mapping-test-image
+- Minecraft source code: https://github.com/WangTingZheng/mcp940/blob/master/src/minecraft/net/minecraft/init/Blocks.java
 
