@@ -30,7 +30,7 @@ export class ChunkMeshBuilder {
         for (let x = 0; x < world.info.CHUNK_SIZE; x++) {
           if (chunk.getBlock(world.info, x, y, z) === 0) continue;
 
-        const chunkPos = extractChunkPosFromHash(chunk.getChunkPos());
+        const chunkPos = extractChunkPosFromHash(chunk.getChunkPosHash());
           const worldX = x + chunkPos.x * world.info.CHUNK_SIZE;
           const worldY = y;
           const worldZ = z + chunkPos.z * world.info.CHUNK_SIZE;

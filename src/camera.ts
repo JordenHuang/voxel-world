@@ -2,8 +2,8 @@ import { mat4, vec3 } from "gl-matrix";
 
 export class Camera {
   public position: vec3;
-  public yaw: number = -Math.PI / 2; // horizontal angle (up and down)(left turn 90 degrees), face +z initially
-  public pitch: number = 0; // vertical angle (left and right), face -z initially
+  public yaw: number = -Math.PI / 2; // horizontal angle (up and down)(left turn 90 degrees)
+  public pitch: number = 0; // vertical angle (left and right), face -z initially (North)
 
   private front: vec3;
   private right: vec3;

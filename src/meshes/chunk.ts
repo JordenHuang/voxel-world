@@ -75,7 +75,7 @@ export class Chunk {
     }
   }
 
-  public getChunkPos() { return this.chunkPosHash; }
+  public getChunkPosHash() { return this.chunkPosHash; }
   public getChunkModel() { return this.chunkModel; }
   public getNeedRedraw() { return this.needRedraw; }
 
