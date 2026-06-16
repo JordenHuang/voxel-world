@@ -11,7 +11,7 @@ export class World {
   public readonly info: WorldInfo = {
     CHUNK_HEIGHT: 16,
     CHUNK_SIZE: 16,
-    RENDER_DISTANCE: 2,
+    RENDER_DISTANCE: 1,
   };
 
   private seed: number;
@@ -22,9 +22,13 @@ export class World {
 
     this.chunks = new Map<ChunkPosHash, Chunk>();
 
-    for (let i = -this.info.RENDER_DISTANCE; i <= this.info.RENDER_DISTANCE; i++) {
-      for (let j = -this.info.RENDER_DISTANCE; j <= this.info.RENDER_DISTANCE; j++) {
-        const chunkPos = calculateChunkPosHash({x: i, z: j});
+    const rd = this.info.RENDER_DISTANCE;
+    for (let i = -rd; i <= rd; i++) {
+      for (let j = -rd; j <= rd; j++) {
+        const chunkPos = calculateChunkPosHash({
+          x: i + playerPosition[0],
+          z: j + playerPosition[2],
+        });
         this.addChunk(new Chunk(this.info, chunkPos));
       }
     }
@@ -34,16 +38,13 @@ export class World {
 
   public getChunk(chunkPosHash: ChunkPosHash) { return this.chunks.get(chunkPosHash); }
 
-  public update(gl: WebGLRenderingContext, playerPosition: vec3) {
-    for (const chunk of this.chunks.values()) {
-      if (chunk.getNeedRedraw()) {
-        chunk.update(gl, this);
-      }
-    }
+  public addChunk(chunk: Chunk) {
+    this.chunks.set(chunk.getChunkPosHash(), chunk);
   }
 
-  public addChunk(chunk: Chunk) {
-    this.chunks.set(chunk.getChunkPos(), chunk);
+  public unloadChunk(chunk: Chunk) {
+    // TODO: Save the chunk to disk so we can load it while keeping player's modifications
+    this.chunks.delete(chunk.getChunkPosHash());
   }
 
   public getBlock(worldX: number, worldY: number, worldZ: number): number {
@@ -60,5 +61,41 @@ export class World {
     const localZ = worldZ - (chunkZ * this.info.CHUNK_SIZE);
 
     return chunk.getBlock(this.info, localX, worldY, localZ);
+  }
+
+  public update(gl: WebGLRenderingContext, playerPosition: vec3) {
+    // Desire chunks
+    const desireChunks: Set<ChunkPosHash> = new Set<ChunkPosHash>();
+    const x = Math.floor(playerPosition[0] / this.info.CHUNK_SIZE);
+    const z = Math.floor(playerPosition[2] / this.info.CHUNK_SIZE);
+
+    const rd = this.info.RENDER_DISTANCE;
+    for (let i = -rd; i <= rd; i++) {
+      for (let j = -rd; j <= rd; j++) {
+        const chunkPos = calculateChunkPosHash({
+          x: i + x,
+          z: j + z,
+        });
+        desireChunks.add(chunkPos);
+      }
+    }
+
+    // Add desire chunks to chunk list
+    for (const desireChunk of desireChunks) {
+      if (!this.chunks.has(desireChunk)) {
+        this.addChunk(new Chunk(this.info, desireChunk));
+      }
+    }
+
+    for (const chunk of this.chunks.values()) {
+      // Unload chunks that's not in desire chunk list
+      if (!desireChunks.has(chunk.getChunkPosHash())) {
+        this.unloadChunk(chunk);
+      }
+
+      if (chunk.getNeedRedraw()) {
+        chunk.update(gl, this);
+      }
+    }
   }
 }
