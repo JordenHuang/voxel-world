@@ -1,9 +1,11 @@
 
 ## TODO
-- [] load/off load chunks
-- [] frustum culling
+- [] frustum culling (ref: https://learnopengl.com/Guest-Articles/2021/Scene/Frustum-Culling)
 - [] world generation
+- [] task queue (or Web worker)
 
+### 2026-06-17
+- [x] load/off load chunks
 ### 2026-06-16
 - [x] More cubes (Mesh class, Chunk class, World class, (Model class ?))
   - Model class: Handlek WebGL buffers

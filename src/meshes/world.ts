@@ -9,9 +9,9 @@ export type WorldInfo = {
 
 export class World {
   public readonly info: WorldInfo = {
-    CHUNK_HEIGHT: 16,
+    CHUNK_HEIGHT: 4,
     CHUNK_SIZE: 16,
-    RENDER_DISTANCE: 1,
+    RENDER_DISTANCE: 16,
   };
 
   private seed: number;
@@ -42,8 +42,9 @@ export class World {
     this.chunks.set(chunk.getChunkPosHash(), chunk);
   }
 
-  public unloadChunk(chunk: Chunk) {
+  public unloadChunk(gl: WebGLRenderingContext, chunk: Chunk) {
     // TODO: Save the chunk to disk so we can load it while keeping player's modifications
+    chunk.unload(gl);
     this.chunks.delete(chunk.getChunkPosHash());
   }
 
@@ -64,6 +65,13 @@ export class World {
   }
 
   public update(gl: WebGLRenderingContext, playerPosition: vec3) {
+    // for (const chunk of this.chunks.values()) {
+    //   if (chunk.getNeedRedraw()) {
+    //     chunk.update(gl, this);
+    //   }
+    // }
+    // return;
+
     // Desire chunks
     const desireChunks: Set<ChunkPosHash> = new Set<ChunkPosHash>();
     const x = Math.floor(playerPosition[0] / this.info.CHUNK_SIZE);
@@ -90,7 +98,7 @@ export class World {
     for (const chunk of this.chunks.values()) {
       // Unload chunks that's not in desire chunk list
       if (!desireChunks.has(chunk.getChunkPosHash())) {
-        this.unloadChunk(chunk);
+        this.unloadChunk(gl, chunk);
       }
 
       if (chunk.getNeedRedraw()) {

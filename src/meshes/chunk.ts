@@ -87,4 +87,8 @@ export class Chunk {
       this.needRedraw = false;
     }
   }
+
+  public unload(gl: WebGLRenderingContext) {
+    if (this.chunkModel) this.chunkModel.dispose(gl);
+  }
 }

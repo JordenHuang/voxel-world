@@ -13,6 +13,10 @@ export class Renderer {
     this.gl.clearDepth(1.0); // Clear everything
     this.gl.enable(this.gl.DEPTH_TEST); // Enable depth testing
     this.gl.depthFunc(this.gl.LEQUAL); // Near things obscure far things
+
+    // // TODO: Enable this
+    // gl.enable(gl.CULL_FACE); // Back face culling
+    // gl.cullFace(gl.BACK);
   }
 
   // 這裡的 texture 就是我們剛剛 loadTexture 回傳的東西
