@@ -5,6 +5,7 @@ import { World } from "./world";
 import { CubeMesh } from "./cube-mesh";
 import { ChunkMeshBuilder } from "./chunk-mesh-builder";
 import { type WorldInfo } from "./world";
+import Perlin from "../thirdparty/perlin";
 
 export type ChunkPos = {x: number, z: number};
 export type ChunkPosHash = string;
@@ -33,19 +34,27 @@ export class Chunk {
   private chunkMesh: Mesh | null = null; // Used as key in world.chunks
   private chunkModel: Model | null = null;
 
-  constructor(worldInfo: WorldInfo, chunkPosHash: ChunkPosHash) {
-    const size = worldInfo.CHUNK_SIZE;
-    const height = worldInfo.CHUNK_HEIGHT;
+  constructor(world: World, chunkPosHash: ChunkPosHash) {
+    const size = world.info.CHUNK_SIZE;
+    const height = world.info.CHUNK_HEIGHT;
     const volume = size * height * size;
 
     this.blocks = new Uint8Array(volume);
     this.chunkPosHash = chunkPosHash;
 
-    // 測試：生成一個簡單的地板
+    const chunkPos = extractChunkPosFromHash(this.chunkPosHash);
     for (let x = 0; x < size; x++) {
       for (let z = 0; z < size; z++) {
-        for (let y = 0; y < height; y++) {
-          this.setBlock(worldInfo, x, y, z, 1);
+          const worldX = x + chunkPos.x * world.info.CHUNK_SIZE;
+          const worldZ = z + chunkPos.z * world.info.CHUNK_SIZE;
+        const perlinHeight = Math.abs(
+          world.getNoise().perlin2(worldX/100, worldZ/100)
+            + world.getNoise().perlin2(worldX/80, worldZ/80)
+            + world.getNoise().perlin2(worldX/30, worldZ/30)
+        );
+        const yHeight = Math.max(1, perlinHeight * height);
+        for (let y = 0; y < yHeight; y++) {
+          this.setBlock(world.info, x, y, z, 1);
         }
       }
     }

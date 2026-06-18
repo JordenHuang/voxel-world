@@ -1,9 +1,13 @@
 
 ## TODO
-- [] frustum culling (ref: https://learnopengl.com/Guest-Articles/2021/Scene/Frustum-Culling)
-- [] world generation
+- [] color/texture toggle
+- [] frustum culling
+  - https://learnopengl.com/Guest-Articles/2021/Scene/Frustum-Culling
+  - https://bruop.github.io/frustum_culling
 - [] task queue (or Web worker)
 
+### 2026-06-18
+- [x] world generation (Perlin noise)
 ### 2026-06-17
 - [x] load/off load chunks
 ### 2026-06-16

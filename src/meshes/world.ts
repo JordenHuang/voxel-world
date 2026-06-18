@@ -1,5 +1,6 @@
 import { mat4, vec3, vec4 } from "gl-matrix";
 import { Chunk, type ChunkPos, type ChunkPosHash, calculateChunkPosHash } from "./chunk";
+import Perlin from "../thirdparty/perlin";
 
 export type WorldInfo = {
   readonly CHUNK_HEIGHT: number;
@@ -9,16 +10,22 @@ export type WorldInfo = {
 
 export class World {
   public readonly info: WorldInfo = {
-    CHUNK_HEIGHT: 4,
+    CHUNK_HEIGHT: 32,
     CHUNK_SIZE: 16,
-    RENDER_DISTANCE: 16,
+    RENDER_DISTANCE: 8,
   };
 
   private seed: number;
+  private noise: Perlin;
   private chunks: Map<ChunkPosHash, Chunk>;
 
-  constructor(seed: number, playerPosition: vec3) {
-    this.seed = seed;
+  constructor(seed: number | null, playerPosition: vec3) {
+    if (typeof seed == null)
+      this.seed = Math.random();
+    else
+      this.seed = seed as number;
+
+    this.noise = new Perlin(this.seed);
 
     this.chunks = new Map<ChunkPosHash, Chunk>();
 
@@ -29,10 +36,12 @@ export class World {
           x: i + playerPosition[0],
           z: j + playerPosition[2],
         });
-        this.addChunk(new Chunk(this.info, chunkPos));
+        this.addChunk(new Chunk(this, chunkPos));
       }
     }
   }
+
+  public getNoise() { return this.noise; }
 
   public getChunks() { return this.chunks; }
 
@@ -91,7 +100,7 @@ export class World {
     // Add desire chunks to chunk list
     for (const desireChunk of desireChunks) {
       if (!this.chunks.has(desireChunk)) {
-        this.addChunk(new Chunk(this.info, desireChunk));
+        this.addChunk(new Chunk(this, desireChunk));
       }
     }
 
