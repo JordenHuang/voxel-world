@@ -31,8 +31,28 @@ export class Game {
     }
 
     // 初始化子系統
-    this.inputManager = new InputManager(this.canvas);
     this.player = new Player(this.gl.canvas.width / this.gl.canvas.height);
+
+    const defaultCanvasWidth = this.canvas.width;
+    const defaultCanvasHeight = this.canvas.height;
+    this.inputManager = new InputManager(this.canvas, (mode: "fullscreen" | "default") => {
+      if (mode === "default") {
+        this.gl.canvas.width = defaultCanvasWidth;
+        this.gl.canvas.height = defaultCanvasHeight;
+      } else if (mode === "fullscreen") {
+        this.gl.canvas.width = window.innerWidth;
+        this.gl.canvas.height = window.innerHeight;
+      }
+
+      // 2. 更新 WebGL 的視口 (Viewport)，告訴它現在可以在多大的畫布上畫圖
+      this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
+
+      // 3. 更新攝影機的長寬比 (Aspect Ratio) 與投影矩陣 (Projection Matrix)
+      // 如果不更新這個，畫面裡的方塊會被壓扁或拉長
+      const aspectRatio = this.gl.canvas.width / this.gl.canvas.height;
+      this.player.camera.updateProjectionMatrix(this.player.near, this.player.far, aspectRatio); 
+    });
+
     this.renderer = new Renderer(this.gl);
     this.shader = new Shader(this.gl, vsSource, fsSource);
     this.world = new World(0, this.player.position);

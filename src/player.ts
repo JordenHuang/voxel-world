@@ -5,18 +5,22 @@ import { InputManager } from "./input-manager";
 export class Player {
   public position: vec3;
   public camera: Camera;
-  private moveDir: vec3;
+  public near: number = 0.1;
+  public far: number = 256.0;
 
+  private moveDir: vec3;
   private movementSpeed: number = 0.015;
   private mouseSpeed: number = 0.003;
 
   constructor(aspectRatio: number) {
     this.position = vec3.fromValues(0, 0, 0);
-    this.camera = new Camera(aspectRatio);
+    this.camera = new Camera(this.near, this.far, aspectRatio);
     this.moveDir = vec3.create();
   }
 
   public update(deltaTime: number, input: InputManager) {
+    let movementSpeed = this.movementSpeed;
+
     // 1. 處理視角旋轉
     this.camera.processMouseMovement(input.mouseDeltaX, input.mouseDeltaY, this.mouseSpeed);
 
@@ -45,6 +49,9 @@ export class Player {
     if (input.isKeyDown("ShiftLeft")) {
       vec3.sub(this.moveDir, this.moveDir, this.camera.getUp());
     }
+    if (input.isKeyDown("ControlLeft")) {
+      movementSpeed *= 5;
+    }
 
     if (input.isKeyDown("KeyR")) {
       vec3.set(this.position, 0, 0, 0);
@@ -60,7 +67,7 @@ export class Player {
     // }
 
     // 3. 實際應用位移量
-    vec3.scale(this.moveDir, this.moveDir, this.movementSpeed * deltaTime);
+    vec3.scale(this.moveDir, this.moveDir, movementSpeed * deltaTime);
     vec3.add(this.position, this.position, this.moveDir);
 
     // 4. 同步讓相機的位置跟著玩家身體走

@@ -12,7 +12,7 @@ export class Camera {
   private projectionMatrix: mat4;
   private FoV: number;
 
-  constructor(aspectRatio: number) {
+  constructor(near: number=0.1, far: number=1000.0, aspectRatio: number) {
     this.position = vec3.fromValues(0, 5, 20);
     this.front = vec3.create();
     this.right = vec3.create();
@@ -23,7 +23,7 @@ export class Camera {
     this.projectionMatrix = mat4.create();
 
     // 建立透視投影矩陣
-    mat4.perspective(this.projectionMatrix, Math.PI / 4, aspectRatio, 0.1, 1000.0);
+    this.updateProjectionMatrix(near, far, aspectRatio);
 
     // 初始化計算方向向量
     this.updateVectors();
@@ -67,4 +67,8 @@ export class Camera {
   public getProjectionMatrix(): mat4 {
     return this.projectionMatrix;
   }
+
+  public updateProjectionMatrix(near: number=0.1, far: number=1000.0, aspectRatio: number) {
+    mat4.perspective(this.projectionMatrix, Math.PI / 4, aspectRatio, near, far);
+  };
 }
