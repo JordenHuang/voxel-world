@@ -88,7 +88,7 @@ export class Chunk {
   public getChunkModel() { return this.chunkModel; }
   public getNeedRedraw() { return this.needRedraw; }
 
-  public update(gl: WebGLRenderingContext, world: World) {
+  public update(gl: WebGL2RenderingContext, world: World) {
     const SHOW_WIREFRAME = false;
     if (this.needRedraw) {
       this.chunkMesh = ChunkMeshBuilder.build(this, world);
@@ -97,7 +97,7 @@ export class Chunk {
     }
   }
 
-  public unload(gl: WebGLRenderingContext) {
+  public unload(gl: WebGL2RenderingContext) {
     if (this.chunkModel) this.chunkModel.dispose(gl);
   }
 }

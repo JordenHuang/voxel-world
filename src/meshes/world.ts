@@ -51,7 +51,7 @@ export class World {
     this.chunks.set(chunk.getChunkPosHash(), chunk);
   }
 
-  public unloadChunk(gl: WebGLRenderingContext, chunk: Chunk) {
+  public unloadChunk(gl: WebGL2RenderingContext, chunk: Chunk) {
     // TODO: Save the chunk to disk so we can load it while keeping player's modifications
     chunk.unload(gl);
     this.chunks.delete(chunk.getChunkPosHash());
@@ -73,7 +73,7 @@ export class World {
     return chunk.getBlock(this.info, localX, worldY, localZ);
   }
 
-  public update(gl: WebGLRenderingContext, playerPosition: vec3) {
+  public update(gl: WebGL2RenderingContext, playerPosition: vec3) {
     // for (const chunk of this.chunks.values()) {
     //   if (chunk.getNeedRedraw()) {
     //     chunk.update(gl, this);

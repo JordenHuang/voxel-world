@@ -1,12 +1,12 @@
 export class Shader {
-  private gl: WebGLRenderingContext;
+  private gl: WebGL2RenderingContext;
   public program: WebGLProgram;
 
   // 使用 TypeScript 的 Record 動態儲存未知的變數
   public attributes: Record<string, number> = {};
   public uniforms: Record<string, WebGLUniformLocation> = {};
 
-  constructor(gl: WebGLRenderingContext, vsSource: string, fsSource: string) {
+  constructor(gl: WebGL2RenderingContext, vsSource: string, fsSource: string) {
     this.gl = gl;
     this.program = this.initShaderProgram(vsSource, fsSource)!;
     

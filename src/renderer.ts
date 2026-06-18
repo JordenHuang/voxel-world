@@ -3,12 +3,12 @@ import { Shader } from "./shader";
 import { Model } from "./meshes/model";
 
 export class Renderer {
-  private gl: WebGLRenderingContext;
+  private gl: WebGL2RenderingContext;
 
   private modelMatrix: mat4 = mat4.create();
   private modelViewMatrix: mat4 = mat4.create();
 
-  constructor(gl: WebGLRenderingContext) {
+  constructor(gl: WebGL2RenderingContext) {
     this.gl = gl;
     this.gl.clearDepth(1.0); // Clear everything
     this.gl.enable(this.gl.DEPTH_TEST); // Enable depth testing

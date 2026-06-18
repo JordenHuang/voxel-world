@@ -7,7 +7,7 @@ import { World } from "./meshes/world";
 
 let cubeRotation = 0.0;
 
-function loadTexture(gl: WebGLRenderingContext, url: string): WebGLTexture {
+function loadTexture(gl: WebGL2RenderingContext, url: string): WebGLTexture {
   const texture = gl.createTexture() as WebGLTexture;
   gl.bindTexture(gl.TEXTURE_2D, texture);
 

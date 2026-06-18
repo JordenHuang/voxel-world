@@ -11,7 +11,7 @@ import fsSource from "./shaders/cube.frag?raw";
 
 export class Game {
   private canvas: HTMLCanvasElement;
-  private gl: WebGLRenderingContext;
+  private gl: WebGL2RenderingContext;
   private inputManager: InputManager;
   private player: Player;
   private renderer: Renderer;
@@ -25,7 +25,7 @@ export class Game {
       throw new Error("Unable to locate canvas element.");
     }
 
-    this.gl = this.canvas.getContext("webgl") as WebGLRenderingContext;
+    this.gl = this.canvas.getContext("webgl2") as WebGL2RenderingContext;
     if (this.gl === null) {
       throw new Error("Unable to initialize WebGL. Your browser or machine may not support it.");
     }

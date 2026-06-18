@@ -9,7 +9,7 @@ export class Model {
   public readonly wireframeVertexCount?: number;
   public readonly wireframeBuffer?: WebGLBuffer;
 
-  constructor(gl: WebGLRenderingContext, mesh: Mesh, genWireframe: boolean = false) {
+  constructor(gl: WebGL2RenderingContext, mesh: Mesh, genWireframe: boolean = false) {
     this.vertexCount = mesh.indices.length;
 
     this.positionsBuffer = gl.createBuffer() as WebGLBuffer;
@@ -44,7 +44,7 @@ export class Model {
     }
   }
 
-  public dispose(gl: WebGLRenderingContext) {
+  public dispose(gl: WebGL2RenderingContext) {
     if (this.positionsBuffer) gl.deleteBuffer(this.positionsBuffer);
     if (this.indicesBuffer) gl.deleteBuffer(this.indicesBuffer);
     if (this.uvsBuffer) gl.deleteBuffer(this.uvsBuffer);
