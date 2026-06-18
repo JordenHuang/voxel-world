@@ -51,7 +51,8 @@ function loadTexture(gl: WebGL2RenderingContext, url: string): WebGLTexture {
   // Here's where we call the routine that builds all the
   // objects we'll be drawing.
   // const buffers = initBuffers(game.gl);
-  let texture = loadTexture(game.getGl(), "./assets/placeholder.png");
+  // let texture = loadTexture(game.getGl(), "./assets/placeholder.png");
+  let texture = loadTexture(game.getGl(), "./assets/frame.png");
 
   // let cubeModel = new Model(game.gl, CubeMesh, true);
   //
