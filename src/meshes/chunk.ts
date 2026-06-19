@@ -5,7 +5,7 @@ import { World } from "./world";
 import { CubeMesh } from "./cube-mesh";
 import { ChunkMeshBuilder } from "./chunk-mesh-builder";
 import { type WorldInfo } from "./world";
-import Perlin from "../thirdparty/perlin";
+import { Shader } from "../shader";
 
 export type ChunkPos = {x: number, z: number};
 export type ChunkPosHash = string;
@@ -88,11 +88,11 @@ export class Chunk {
   public getChunkModel() { return this.chunkModel; }
   public getNeedRedraw() { return this.needRedraw; }
 
-  public update(gl: WebGL2RenderingContext, world: World) {
+  public update(gl: WebGL2RenderingContext, shader: Shader, world: World) {
     const SHOW_WIREFRAME = false;
     if (this.needRedraw) {
       this.chunkMesh = ChunkMeshBuilder.build(this, world);
-      this.chunkModel = new Model(gl, this.chunkMesh, SHOW_WIREFRAME);
+      this.chunkModel = new Model(gl, shader, this.chunkMesh, SHOW_WIREFRAME);
       this.needRedraw = false;
     }
   }

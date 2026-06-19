@@ -1,11 +1,14 @@
 
 ## TODO
-- [] color/texture toggle
 - [] frustum culling
   - https://learnopengl.com/Guest-Articles/2021/Scene/Frustum-Culling
   - https://bruop.github.io/frustum_culling
 - [] task queue (or Web worker)
 
+### 2026-06-19
+- [x] color/texture toggle
+  - Change texture to white image and apply color using shader
+- [x] Use vertex array object to reduce webgl API call
 ### 2026-06-18
 - [x] world generation (Perlin noise)
 ### 2026-06-17

@@ -1,5 +1,6 @@
 import { mat4, vec3, vec4 } from "gl-matrix";
 import { Chunk, type ChunkPos, type ChunkPosHash, calculateChunkPosHash } from "./chunk";
+import { Shader } from "../shader";
 import Perlin from "../thirdparty/perlin";
 
 export type WorldInfo = {
@@ -73,7 +74,7 @@ export class World {
     return chunk.getBlock(this.info, localX, worldY, localZ);
   }
 
-  public update(gl: WebGL2RenderingContext, playerPosition: vec3) {
+  public update(gl: WebGL2RenderingContext, shader: Shader, playerPosition: vec3) {
     // for (const chunk of this.chunks.values()) {
     //   if (chunk.getNeedRedraw()) {
     //     chunk.update(gl, this);
@@ -111,7 +112,7 @@ export class World {
       }
 
       if (chunk.getNeedRedraw()) {
-        chunk.update(gl, this);
+        chunk.update(gl, shader, this);
       }
     }
   }

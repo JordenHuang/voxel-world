@@ -66,7 +66,7 @@ export class Game {
     this.player.update(deltaTime, this.inputManager);
 
     // 2. 更新世界狀態（例如哪些 Chunk 需要加載）
-    this.world.update(this.gl, this.player.position);
+    this.world.update(this.gl, this.shader, this.player.position);
 
     // 3. 後續處理：清空滑鼠單次點擊狀態
     this.inputManager.clearFrameData();

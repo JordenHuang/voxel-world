@@ -15,14 +15,16 @@ in vec3 voxelColor;
 // const vec3 voxelColor = vec3(255.0, 255.0, 0.0);
 
 void main(void) {
-    vec3 texCol = texture(uSampler, vTextureCoord).rgb;
+    vec4 texture = texture(uSampler, vTextureCoord);
+    vec3 texCol = texture.rgb;
 
-    texCol = pow(texCol, gamma);
+    // texCol = pow(texCol, gamma);
     // texCol.rgb = voxelColor / 255.0;
-    texCol.rgb = voxelColor;
-    texCol = pow(texCol, invGamma);
+    // texCol.rgb = voxelColor;
+    // texCol = pow(texCol, invGamma);
+    // texture.a = 1.0;
 
-    fragColor = vec4(texCol, 1.0);
+    fragColor = vec4(texCol, texture.a);
 
     // fragColor = texture(uSampler, vTextureCoord);
     // gl_FragColor = vColor;
