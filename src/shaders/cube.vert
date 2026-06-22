@@ -5,6 +5,7 @@ in vec3 aVertexPosition;
 in vec4 aVertexColor;
 in vec2 aTextureCoord;
 
+in float aAO; // Ambient occlusion level
 uniform mat4 uModelViewMatrix;
 uniform mat4 uProjectionMatrix;
 
@@ -13,6 +14,7 @@ out highp vec2 vTextureCoord;
 out vec3 voxelColor;
 
 in lowp vec4 vColor;
+out float vAO;
 
 
 // ===
@@ -36,4 +38,5 @@ void main(void) {
     vTextureCoord = aTextureCoord;
 
     voxelColor = hash_(vec3(aVertexPosition.y) * 10.0);
+    vAO = aAO;
 }

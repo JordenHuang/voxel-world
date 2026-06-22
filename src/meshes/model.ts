@@ -9,6 +9,7 @@ export class Model {
   public readonly positionsBuffer: WebGLBuffer;
   public readonly indicesBuffer: WebGLBuffer;
   public readonly uvsBuffer: WebGLBuffer;
+  public readonly aosBuffer: WebGLBuffer;
 
   public readonly wireframeVertexCount?: number;
   public readonly wireframeBuffer?: WebGLBuffer;
@@ -35,6 +36,12 @@ export class Model {
     gl.vertexAttribPointer(shader.attributes["aTextureCoord"] as GLint, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(shader.attributes["aTextureCoord"] as GLint);
 
+    this.aosBuffer = gl.createBuffer() as WebGLBuffer;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.aosBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.aos), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(shader.attributes["aAO"] as GLint, 1, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(shader.attributes["aAO"] as GLint);
+
     if (genWireframe === true) {
       let wireframeIndices: number[] = [];
       for (let i = 0; i < mesh.indices.length; i += 3) {
@@ -52,15 +59,16 @@ export class Model {
       this.wireframeBuffer = gl.createBuffer() as WebGLBuffer;
       // gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.wireframeBuffer);
       // gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(wireframeIndices), gl.STATIC_DRAW);
-
-      gl.bindVertexArray(null);
     }
+
+    gl.bindVertexArray(null);
   }
 
   public dispose(gl: WebGL2RenderingContext) {
     if (this.positionsBuffer) gl.deleteBuffer(this.positionsBuffer);
     if (this.indicesBuffer) gl.deleteBuffer(this.indicesBuffer);
     if (this.uvsBuffer) gl.deleteBuffer(this.uvsBuffer);
+    if (this.aosBuffer) gl.deleteBuffer(this.aosBuffer);
     if (this.wireframeBuffer) gl.deleteBuffer(this.wireframeBuffer);
     // if (this.colorBuffer) gl.deleteBuffer(this.colorBuffer);
 

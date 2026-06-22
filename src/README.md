@@ -1,14 +1,18 @@
 
 ## TODO
+- [] task queue (or Web worker)
+- [] Shadow base on sunlight
+- [] Data packing
+
+### 2026-06-22
 - [x] frustum culling
   - https://learnopengl.com/Guest-Articles/2021/Scene/Frustum-Culling
   - https://bruop.github.io/frustum_culling
   - AABB:
     - https://ktstephano.github.io/rendering/stratusgfx/aabbs
-- [] task queue (or Web worker)
-- [] Shadow between blocks
-- [] Shadow base on sunlight
-
+- [x] Shadow between blocks
+  - Ambient occlusion
+    - https://0fps.net/2013/07/03/ambient-occlusion-for-minecraft-like-worlds/
 ### 2026-06-19
 - [x] color/texture toggle
   - Change texture to white image and apply color using shader
