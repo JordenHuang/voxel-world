@@ -63,8 +63,8 @@ export class Chunk {
     // Generate blocks in chunk
     for (let x = 0; x < size; x++) {
       for (let z = 0; z < size; z++) {
-          const worldX = x + chunkPos.x * world.info.CHUNK_SIZE;
-          const worldZ = z + chunkPos.z * world.info.CHUNK_SIZE;
+        const worldX = x + chunkPos.x * world.info.CHUNK_SIZE;
+        const worldZ = z + chunkPos.z * world.info.CHUNK_SIZE;
         const perlinHeight = Math.abs(
           world.getNoise().perlin2(worldX/100, worldZ/100)
             + world.getNoise().perlin2(worldX/80, worldZ/80)
@@ -74,6 +74,11 @@ export class Chunk {
         for (let y = 0; y < yHeight; y++) {
           this.setBlock(world.info, x, y, z, 1);
         }
+
+        // for (let y = 0; y < 1; y++) {
+        //   this.setBlock(world.info, x, y, z, 1);
+        //   if (x == 0 && z == 0) this.setBlock(world.info, x, y+1, z, 1);
+        // }
       }
     }
   }

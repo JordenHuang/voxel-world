@@ -2,6 +2,8 @@ import { mat4 } from "gl-matrix";
 import { Shader } from "./shader";
 import { Model } from "./meshes/model";
 
+type UniformSetter = (gl: WebGL2RenderingContext, shader: Shader) => void;
+
 export class Renderer {
   private gl: WebGL2RenderingContext;
 
@@ -19,7 +21,7 @@ export class Renderer {
     // gl.cullFace(gl.BACK);
   }
 
-  public draw(shader: Shader, model: Model, viewMatrix: mat4, projectionMatrix: mat4, texture: WebGLTexture) {
+  public draw(shader: Shader, model: Model, viewMatrix: mat4, projectionMatrix: mat4, texture: WebGLTexture, setCustomUniforms?: UniformSetter) {
     const gl = this.gl;
 
     // Calculate model matrix
@@ -44,14 +46,19 @@ export class Renderer {
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.uniform1i(shader.uniforms["uSampler"] as WebGLUniformLocation, 0); // 告訴 Shader 圖片在 TEXTURE0
 
+    if (setCustomUniforms) {
+      setCustomUniforms(gl, shader);
+    }
+
     gl.bindVertexArray(model.vao);
 
     // Render on screen
-    const drawWireframe = true;
+    const drawWireframe = false;
 
     if (drawWireframe && model.wireframeBuffer !== undefined) {
       gl.bindTexture(gl.TEXTURE_2D, null);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, model.wireframeBuffer);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(model.wireframeIndices as number[]), gl.STATIC_DRAW);
       gl.drawElements(gl.LINES, model.wireframeVertexCount as number, gl.UNSIGNED_SHORT, 0);
     } else {
       gl.drawElements(gl.TRIANGLES, model.vertexCount, gl.UNSIGNED_SHORT, 0);

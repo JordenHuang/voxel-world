@@ -13,6 +13,7 @@ export class Model {
 
   public readonly wireframeVertexCount?: number;
   public readonly wireframeBuffer?: WebGLBuffer;
+  public readonly wireframeIndices?: number[];
 
   constructor(gl: WebGL2RenderingContext, shader: Shader, mesh: Mesh, genWireframe: boolean = false) {
     this.vao = gl.createVertexArray();
@@ -57,6 +58,7 @@ export class Model {
       }
       this.wireframeVertexCount = wireframeIndices.length;
       this.wireframeBuffer = gl.createBuffer() as WebGLBuffer;
+      this.wireframeIndices = wireframeIndices;
       // gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.wireframeBuffer);
       // gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(wireframeIndices), gl.STATIC_DRAW);
     }

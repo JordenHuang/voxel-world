@@ -34,8 +34,8 @@ export class World {
     for (let i = -rd; i <= rd; i++) {
       for (let j = -rd; j <= rd; j++) {
         const chunkPos = calculateChunkPosHash({
-          x: i + playerPosition[0],
-          z: j + playerPosition[2],
+          x: Math.floor(i + playerPosition[0]),
+          z: Math.floor(j + playerPosition[2]),
         });
         this.addChunk(new Chunk(this, chunkPos));
       }

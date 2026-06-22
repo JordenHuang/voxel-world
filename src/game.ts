@@ -87,8 +87,13 @@ export class Game {
       }
     }
 
+    const setCustomUniforms = (gl: WebGL2RenderingContext, shader: Shader) => {
+      gl.uniform1f(shader.uniforms["uChunkHeight"] as WebGLUniformLocation, this.world.info.CHUNK_HEIGHT);
+      gl.uniform1f(shader.uniforms["uTime"] as WebGLUniformLocation, this.player.position[0] * this.player.position[2]);
+    }
+
     for (const chunk of chunksAfterFrustumCulling) {
-        this.renderer.draw(this.shader, chunk.getChunkModel() as Model, this.player.camera.getViewMatrix(), this.player.camera.getProjectionMatrix(), texture);
+        this.renderer.draw(this.shader, chunk.getChunkModel() as Model, this.player.camera.getViewMatrix(), this.player.camera.getProjectionMatrix(), texture, setCustomUniforms);
     }
     // console.log("All:", this.world.getChunks().size);
     // console.log("Frustum culling:", chunksAfterFrustumCulling.length);
