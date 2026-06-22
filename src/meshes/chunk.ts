@@ -34,6 +34,13 @@ export class Chunk {
   private chunkMesh: Mesh | null = null; // Used as key in world.chunks
   private chunkModel: Model | null = null;
 
+  public readonly minX: number;
+  public readonly minY: number;
+  public readonly minZ: number;
+  public readonly maxX: number;
+  public readonly maxY: number;
+  public readonly maxZ: number;
+
   constructor(world: World, chunkPosHash: ChunkPosHash) {
     const size = world.info.CHUNK_SIZE;
     const height = world.info.CHUNK_HEIGHT;
@@ -43,6 +50,17 @@ export class Chunk {
     this.chunkPosHash = chunkPosHash;
 
     const chunkPos = extractChunkPosFromHash(this.chunkPosHash);
+
+    // Calculate chunk min/max boundary
+    this.minX = chunkPos.x * world.info.CHUNK_SIZE;
+    this.minY = 0;
+    this.minZ = chunkPos.z * world.info.CHUNK_SIZE;
+
+    this.maxX = this.minX + world.info.CHUNK_SIZE;
+    this.maxY = world.info.CHUNK_HEIGHT;
+    this.maxZ = this.minZ + world.info.CHUNK_SIZE;
+
+    // Generate blocks in chunk
     for (let x = 0; x < size; x++) {
       for (let z = 0; z < size; z++) {
           const worldX = x + chunkPos.x * world.info.CHUNK_SIZE;
@@ -52,7 +70,7 @@ export class Chunk {
             + world.getNoise().perlin2(worldX/80, worldZ/80)
             + world.getNoise().perlin2(worldX/30, worldZ/30)
         );
-        const yHeight = Math.max(1, perlinHeight * height);
+        const yHeight = Math.max(1, Math.floor(perlinHeight * world.info.CHUNK_HEIGHT));
         for (let y = 0; y < yHeight; y++) {
           this.setBlock(world.info, x, y, z, 1);
         }

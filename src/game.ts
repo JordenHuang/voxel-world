@@ -4,6 +4,7 @@ import { InputManager } from "./input-manager";
 import { Renderer } from "./renderer";
 import { Shader } from "./shader";
 import { World } from "./meshes/world";
+import { Chunk } from "./meshes/chunk";
 import { Model } from "./meshes/model";
 import vsSource from "./shaders/cube.vert?raw";
 import fsSource from "./shaders/cube.frag?raw";
@@ -78,9 +79,19 @@ export class Game {
     // 呼叫渲染器畫出世界...
     // this.renderer.draw(this.shader, buffers, this.player.camera.getViewMatrix(), this.player.camera.getProjectionMatrix(), texture);
 
+    let chunksAfterFrustumCulling: Chunk[] = [];
     for (const chunk of this.world.getChunks().values()) {
-      this.renderer.draw(this.shader, chunk.getChunkModel() as Model, this.player.camera.getViewMatrix(), this.player.camera.getProjectionMatrix(), texture);
+      // Frustum culling
+      if (this.player.camera.frustum.intersectsAABB(chunk.minX, chunk.minY, chunk.minZ, chunk.maxX, chunk.maxY, chunk.maxZ)) {
+        chunksAfterFrustumCulling.push(chunk);
+      }
     }
+
+    for (const chunk of chunksAfterFrustumCulling) {
+        this.renderer.draw(this.shader, chunk.getChunkModel() as Model, this.player.camera.getViewMatrix(), this.player.camera.getProjectionMatrix(), texture);
+    }
+    // console.log("All:", this.world.getChunks().size);
+    // console.log("Frustum culling:", chunksAfterFrustumCulling.length);
   }
 
   private lastTimestamp = 0;

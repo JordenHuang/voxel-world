@@ -19,11 +19,17 @@ export class Player {
   }
 
   public update(deltaTime: number, input: InputManager) {
-    let movementSpeed = this.movementSpeed;
 
     // 1. 處理視角旋轉
     this.camera.processMouseMovement(input.mouseDeltaX, input.mouseDeltaY, this.mouseSpeed);
 
+    this.handleKeys(deltaTime, input);
+
+    this.camera.updateFrustum();
+  }
+
+  private handleKeys(deltaTime: number, input: InputManager) {
+    let movementSpeed = this.movementSpeed;
     // 2. 處理 WASD 移動向量計算
     vec3.set(this.moveDir, 0, 0, 0); // 清空上一幀
 

@@ -1,9 +1,13 @@
 
 ## TODO
-- [] frustum culling
+- [x] frustum culling
   - https://learnopengl.com/Guest-Articles/2021/Scene/Frustum-Culling
   - https://bruop.github.io/frustum_culling
+  - AABB:
+    - https://ktstephano.github.io/rendering/stratusgfx/aabbs
 - [] task queue (or Web worker)
+- [] Shadow between blocks
+- [] Shadow base on sunlight
 
 ### 2026-06-19
 - [x] color/texture toggle
