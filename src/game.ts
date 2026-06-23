@@ -6,9 +6,9 @@ import { Shader } from "./shader";
 import { World } from "./meshes/world";
 import { Chunk } from "./meshes/chunk";
 import { Model } from "./meshes/model";
+import { Raycast, type RaycastResult } from "./raycast";
 import vsSource from "./shaders/cube.vert?raw";
 import fsSource from "./shaders/cube.frag?raw";
-
 
 export class Game {
   private canvas: HTMLCanvasElement;
@@ -62,6 +62,43 @@ export class Game {
   // 協調各個子系統更新
   private update(deltaTime: number) {
     if (this.isPaused) return;
+
+
+    // TODO: Move to PlayerController
+    const rayResult = Raycast.cast(this.world, this.player.camera.position, this.player.camera.getFront(), 5);
+    if (rayResult && rayResult.hit) {
+      if (this.inputManager.isButtonReleased("0")) {
+        if (rayResult.hitPos) {
+          console.log("Left click");
+          this.world.removeBlock(
+            rayResult.hitPos[0],
+            rayResult.hitPos[1],
+            rayResult.hitPos[2]
+          );
+        }
+      }
+      else if (this.inputManager.isButtonReleased("2")) {
+        if (rayResult.prevPos && rayResult.normal) {
+          console.log("Right click");
+
+          const block = this.world.getBlock(
+            rayResult.prevPos[0],
+            rayResult.prevPos[1],
+            rayResult.prevPos[2],
+          );
+
+          if (block === 0) {
+            this.world.setBlock(
+              rayResult.prevPos[0],
+              rayResult.prevPos[1],
+              rayResult.prevPos[2],
+              1
+            );
+          }
+        }
+      }
+    }
+
 
     // 1. 讀取輸入，並傳遞給 Player 去處理移動
     this.player.update(deltaTime, this.inputManager);

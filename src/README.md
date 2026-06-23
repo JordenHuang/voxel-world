@@ -1,8 +1,17 @@
 
+## Fix
+- [] Neighbor chunks should also check if it needs redraw when removing block in a chunk
+- [] Ambient occlusion at chunk border is weird
+
 ## TODO
 - [] task queue (or Web worker)
 - [] Shadow base on sunlight
 - [] Data packing
+- [] Highlight cursor pointed block
+- [] PlayerManager class
+
+### 2026-06-23
+- [x] Raycasting and block placement/destruction
 
 ### 2026-06-22
 - [x] frustum culling

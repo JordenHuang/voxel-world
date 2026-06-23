@@ -74,6 +74,38 @@ export class World {
     return chunk.getBlock(this.info, localX, worldY, localZ);
   }
 
+  public setBlock(worldX: number, worldY: number, worldZ: number, id: number) {
+    if (worldY < 0 || worldY >= this.info.CHUNK_HEIGHT) return 0;
+
+    const chunkX = Math.floor(worldX / this.info.CHUNK_SIZE);
+    const chunkZ = Math.floor(worldZ / this.info.CHUNK_SIZE);
+
+    const chunkPos = calculateChunkPosHash({x: chunkX, z:  chunkZ});
+    const chunk = this.getChunk(chunkPos);
+    if (!chunk) return 0; // Chunk 未載入視為空氣
+
+    const localX = worldX - (chunkX * this.info.CHUNK_SIZE);
+    const localZ = worldZ - (chunkZ * this.info.CHUNK_SIZE);
+
+    return chunk.setBlock(this.info, localX, worldY, localZ, id);
+  }
+
+  public removeBlock(worldX: number, worldY: number, worldZ: number) {
+    if (worldY < 0 || worldY >= this.info.CHUNK_HEIGHT) return 0;
+
+    const chunkX = Math.floor(worldX / this.info.CHUNK_SIZE);
+    const chunkZ = Math.floor(worldZ / this.info.CHUNK_SIZE);
+
+    const chunkPos = calculateChunkPosHash({x: chunkX, z:  chunkZ});
+    const chunk = this.getChunk(chunkPos);
+    if (!chunk) return 0; // Chunk 未載入視為空氣
+
+    const localX = worldX - (chunkX * this.info.CHUNK_SIZE);
+    const localZ = worldZ - (chunkZ * this.info.CHUNK_SIZE);
+
+    return chunk.setBlock(this.info, localX, worldY, localZ, 0);
+  }
+
   public update(gl: WebGL2RenderingContext, shader: Shader, playerPosition: vec3) {
     // for (const chunk of this.chunks.values()) {
     //   if (chunk.getNeedRedraw()) {
