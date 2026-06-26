@@ -4,6 +4,7 @@
 - [] Ambient occlusion at chunk border is weird
 
 ## TODO
+- https://github.com/SanderMertens/ecs-faq
 - [] task queue (or Web worker)
 - [] Shadow base on sunlight
 - [] Data packing
