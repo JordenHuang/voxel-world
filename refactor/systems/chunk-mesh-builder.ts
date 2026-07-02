@@ -213,7 +213,7 @@ export class ChunkMeshBuilder implements System {
 
       const renderable = this.ecs.getComponent(chunk, "Renderable")!;
       const chunkData = this.ecs.getComponent(chunk, "ChunkData")!;
-      const world = chunkData.ownedByWorld;
+      const world = chunkData.worldId;
       const worldInfo = this.ecs.getComponent(world, "WorldInfo")!;
       const worldData = this.ecs.getComponent(world, "WorldData")!;
 

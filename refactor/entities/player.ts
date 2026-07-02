@@ -1,13 +1,12 @@
-import { mat4, vec3 } from "gl-matrix";
-
+import { vec3 } from "gl-matrix";
 import { ECS } from "../ecs";
 import type { Entity } from "./entity";
-import type { Position } from "../components/";
-import type { Rotation } from "../components/";
+import type { Position, Rotation } from "../components/";
 
 export interface PlayerOptions {
   position?: Position;
   rotation?: Rotation;
+  isMainPlayer?: boolean;
 }
 
 export function createPlayer(ecs: ECS, options: PlayerOptions = {}): Entity {
@@ -15,12 +14,21 @@ export function createPlayer(ecs: ECS, options: PlayerOptions = {}): Entity {
 
   ecs.attachComponent(playerEntity, "PlayerTag", {});
 
-  ecs.attachComponent(playerEntity, "Position", options.position ?? vec3.fromValues(0, 0, 0));
+  if (options.isMainPlayer)
+    ecs.attachComponent(playerEntity, "MainPlayerTag", {});
+
+  ecs.attachComponent(playerEntity, "Position", {
+    value: options.position?.value ?? vec3.fromValues(0, 0, 0),
+  });
 
   ecs.attachComponent(playerEntity, "Rotation", {
     pitch: options.rotation?.pitch ?? 0,
-    yaw: options.rotation?.yaw ?? -Math.PI / 2,
-    roll: options.rotation?.roll ?? 0,
+    yaw:   options.rotation?.yaw   ?? -Math.PI / 2,
+    roll:  options.rotation?.roll  ?? 0,
+  });
+
+  ecs.attachComponent(playerEntity, "Velocity", {
+    value: vec3.create(),
   });
 
   ecs.attachComponent(playerEntity, "InputMap", {

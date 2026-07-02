@@ -19,11 +19,10 @@ function loadTexture(gl: WebGL2RenderingContext, url: string): WebGLTexture {
   const texture = gl.createTexture() as WebGLTexture;
   gl.bindTexture(gl.TEXTURE_2D, texture);
 
-  // 1. 先塞入一個 1x1 的藍色像素作為佔位符 (Placeholder)
+  // Blue pixel as a laceholder when the texture is loading
   const pixel = new Uint8Array([0, 0, 255, 255]);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
 
-  // 2. 建立 Image 物件開始非同步載入
   const image = new Image();
   image.crossOrigin = "anonymous";
   image.onload = () => {
@@ -33,18 +32,14 @@ function loadTexture(gl: WebGL2RenderingContext, url: string): WebGLTexture {
 
     const isPowerOf2 = (value: number) => (value & (value - 1)) === 0;
 
-    // 檢查圖片長寬是否都是 2 的次方
     if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
-      // ✅ 是 POT：開啟 Mipmap
       gl.generateMipmap(gl.TEXTURE_2D);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     } else {
-      // ❌ 不是 POT：關閉 Mipmap，並強制設定邊緣處理方式
-      // 警告：WebGL1 規定非 POT 圖片不能使用 REPEAT (重複平鋪) 功能
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // 縮小用 Nearest
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // 放大用 Nearest
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     }
   };
   image.src = url;
@@ -55,6 +50,7 @@ function loadTexture(gl: WebGL2RenderingContext, url: string): WebGLTexture {
 export class Game {
   private canvas: HTMLCanvasElement;
   private gl: WebGL2RenderingContext;
+  private lastTimestamp = 0;
 
   private ecs: ECS;
   private eventBus: EventBus;
@@ -68,12 +64,14 @@ export class Game {
   private inputSystem: Systems.InputSystem;
   private renderSystem: Systems.RenderSystem;
   private targetFollowerSystem: Systems.TargetFollowerSystem;
+  private movementSystem: Systems.MovementSystem;
 
   private worldSystem: Systems.WorldSystem;
-  private chunkBuilder: Systems.ChunkBuilder;
+  private OverworldChunkBuilder: Systems.OverworldChunkBuilder;
   private chunkMeshBuilder: Systems.ChunkMeshBuilder;
 
-  private fpsAverage = new SlidingFpsAverage(10);
+  private fpsLabel: HTMLElement;
+  private fpsAverage: SlidingFpsAverage;
 
   constructor() {
     this.canvas = document.getElementById("game-canvas") as HTMLCanvasElement;
@@ -86,6 +84,9 @@ export class Game {
       throw new Error("Unable to initialize WebGL. Your browser or machine may not support it.");
     }
 
+    this.fpsLabel = document.getElementById("fps-label") as HTMLElement;
+    this.fpsAverage = new SlidingFpsAverage(10);
+
     this.ecs = new ECS();
     this.eventBus = new EventBus();
 
@@ -96,71 +97,57 @@ export class Game {
       isMainCamera: true,
     } as Entities.CameraOptions);
 
-    const seed = 0;
-    const worldInfo = {
+    const worldOptions = {
       CHUNK_HEIGHT: 32,
       CHUNK_SIZE: 16,
       RENDER_DISTANCE: 8,
-      // CHUNK_HEIGHT: 16,
-      // CHUNK_SIZE: 1,
-      // RENDER_DISTANCE: 8,
-    } as Components.WorldInfo;
-    this.world = Entities.createWorld(this.ecs, worldInfo, seed);
+    };
+    this.world = Entities.createMainWorld(this.ecs, worldOptions);
 
+    const seed = 0;
     let shader = new Shader(this.gl, vsSource, fsSource);
     let texture = loadTexture(this.gl, "./assets/frame.png");
 
     const setCustomUniforms = (gl: WebGL2RenderingContext, shader: Shader) => {
-      gl.uniform1f(shader.uniforms["uChunkHeight"] as WebGLUniformLocation, worldInfo.CHUNK_HEIGHT);
+      gl.uniform1f(shader.uniforms["uChunkHeight"] as WebGLUniformLocation, worldOptions.CHUNK_HEIGHT);
       // gl.uniform1f(shader.uniforms["uTime"] as WebGLUniformLocation, this.player.position[0] * this.player.position[2]);
     }
 
-    this.playerControlSystem = new Systems.PlayerControlSystem(this.ecs, this.eventBus);
-    this.cameraSystem = new Systems.CameraSystem(this.ecs, this.eventBus);
+    // Systems
     this.inputSystem = new Systems.InputSystem(this.ecs, this.eventBus);
-    this.renderSystem = new Systems.RenderSystem(this.ecs, this.eventBus, this.canvas, this.gl, shader, texture, setCustomUniforms);
+    this.playerControlSystem = new Systems.PlayerControlSystem(this.ecs, this.eventBus);
+    this.movementSystem = new Systems.MovementSystem(this.ecs);
     this.targetFollowerSystem = new Systems.TargetFollowerSystem(this.ecs);
+    this.cameraSystem = new Systems.CameraSystem(this.ecs, this.eventBus);
 
     this.worldSystem = new Systems.WorldSystem(this.ecs, this.eventBus, this.gl, shader);
-    this.chunkBuilder = new Systems.ChunkBuilder(this.ecs, this.eventBus);
+    this.OverworldChunkBuilder = new Systems.OverworldChunkBuilder(this.ecs, this.eventBus, seed);
     this.chunkMeshBuilder = new Systems.ChunkMeshBuilder(this.ecs, this.eventBus, this.gl);
+
+    this.renderSystem = new Systems.RenderSystem(this.ecs, this.eventBus, this.canvas, this.gl, shader, texture, setCustomUniforms);
   }
 
-  private lastTimestamp = 0;
   private gameLoop(timestamp: number, texture: WebGLTexture) {
     const deltaTime = (timestamp - this.lastTimestamp); // In millisecond
     this.lastTimestamp = timestamp;
 
     this.inputSystem.update(deltaTime);
     this.playerControlSystem.update(deltaTime);
+    this.movementSystem.update(deltaTime);
     this.targetFollowerSystem.update(deltaTime);
     this.cameraSystem.update(deltaTime);
 
     this.worldSystem.update(deltaTime);
-    this.chunkBuilder.update(deltaTime);
+    this.OverworldChunkBuilder.update(deltaTime);
     this.chunkMeshBuilder.update(deltaTime);
 
     this.renderSystem.update(deltaTime);
 
     this.inputSystem.clearFrameData();
 
-    // ==============================
-
-
-    // const player = this.ecs.queryFirst("PlayerTag", "Position", "Rotation");
-    // const mainCamera = this.ecs.queryFirst("MainCameraTag");
-    // if (player && mainCamera) {
-    //   const playPosition = this.ecs.getComponent(player, "Position")!;
-    //   const camPosition = this.ecs.getComponent(mainCamera, "Position")!;
-    //   console.log(...playPosition, vec3.equals(playPosition, camPosition));
-    // }
-
-    // ==============================
-
-    const fpsLabel = document.getElementById("fps-label") as HTMLCanvasElement;
-    const fps = Math.round(1/deltaTime*1000);
+    const fps = Math.round(1 / deltaTime*1000);
     this.fpsAverage.add(fps);
-    fpsLabel.innerText = `FPS: ${this.fpsAverage.getAverage()}`;
+    this.fpsLabel.innerText = `FPS: ${this.fpsAverage.getAverage()}`;
 
     requestAnimationFrame((timestamp) => this.gameLoop(timestamp, texture));
   }

@@ -6,7 +6,7 @@ export interface ChunkData {
   blocks: Uint8Array;
   chunkPosHash: ChunkPosHash;
 
-  readonly ownedByWorld: Entity;
+  readonly worldId: Entity; // Chunk belongs to which world
 
   readonly boundaryMin: vec3; // [ x, y, z ]
   readonly boundaryMax: vec3; // [ x, y, z ]

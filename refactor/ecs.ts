@@ -26,6 +26,26 @@ export class ECS {
     this.componentPools.get(name)!.set(entity, data);
   }
 
+  public removeComponent<K extends ComponentName>(entity: Entity, name: K): boolean {
+    const pool = this.componentPools.get(name);
+
+    // 如果這個組件的池子根本不存在，直接回傳 false
+    if (!pool) {
+      return false;
+    }
+
+    // 將該實體從這個組件的 Map 中刪除
+    // .delete() 會在成功刪除時回傳 true，若該實體本來就沒這個組件則回傳 false
+    return pool.delete(entity);
+  }
+
+  public hasComponent<K extends ComponentName>(entity: Entity, name: K): boolean {
+    const componentPool = this.componentPools.get(name);
+    if (componentPool === undefined)
+      return false;
+    return componentPool.has(entity);
+  }
+
   public getComponent<K extends ComponentName>(entity: Entity, name: K): ComponentMap[K] | undefined {
     return this.componentPools.get(name)?.get(entity);
   }

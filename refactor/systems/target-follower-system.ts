@@ -25,17 +25,21 @@ export class TargetFollowerSystem implements System {
       // 如果目標不存在 (例如玩家死掉被銷毀了)，相機就不動
       if (!targetPos || !targetRot) continue;
 
+      // Update follower's rotation
       camRot.yaw = targetRot.yaw;
       camRot.pitch = targetRot.pitch;
       camRot.roll = targetRot.roll;
 
       // 計算相機「理想中」應該要在哪裡 (目標位置 + 偏移量)
       // 嚴格寫法：直接設定位置 (瞬間移動，適合第一人稱 First-person)
-      vec3.add(camPos, targetPos, followData.offset);
+      // Update follower's position
+      vec3.add(camPos.value, targetPos.value, followData.offset);
 
       // 進階寫法：使用 Lerp (線性插值) 讓相機平滑移動 (適合第三人稱)
+      // P_new = P_old + (P_target - P_old) * speed
+      // const desiredPos = vec3.add(vec3.create(), targetPos.value, followData.offset);
       // const speed = followData.lerpFactor * deltaTime/1000; 
-      // vec3.scaleAndAdd(camPos, camPos, vec3.sub(vec3.create(), targetPos, camPos), speed);
+      // vec3.lerp(camPos.value, camPos.value, desiredPos, speed);
 
       // 如果這個跟隨者剛好是相機，我們必須標記它的 ViewMatrix 需要重算
       const camData = this.ecs.getComponent(follower, "DirtyFlag");

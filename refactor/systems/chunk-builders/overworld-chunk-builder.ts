@@ -1,34 +1,38 @@
-import { ECS } from "../ecs";
-import { EventBus } from "../event-bus";
-import type { System } from "./index";
-import type { Entity } from "../entities";
+import Perlin from "../../thirdparty/perlin";
+import { ECS } from "../../ecs";
+import { EventBus } from "../../event-bus";
+import type { System } from "../index";
 import {
-  calculateChunkPosHash,
   extractChunkPosFromHash,
-  chunkSetBlock,
   worldSetBlockAndUpdateMesh,
-} from "../utils";
+} from "../../utils";
 
-export class ChunkBuilder implements System {
+export class OverworldChunkBuilder implements System {
   private ecs: ECS;
   private eventBus: EventBus;
+  private seed: number;
+  private noise: Perlin;
 
-  constructor(ecs: ECS, eventBus: EventBus) {
+  constructor(ecs: ECS, eventBus: EventBus, seed?: number) {
     this.ecs = ecs;
     this.eventBus = eventBus;
+
+    if (seed !== undefined) {
+      this.seed = seed;
+    } else {
+      this.seed = Math.random();
+    }
+
+    this.noise = new Perlin(this.seed);
   }
 
-
   public update(deltaTime: number) {
-    const chunkEntities = this.ecs.query("ChunkData", "DirtyFlag");
+    const chunkEntities = this.ecs.query("WOverworldTag", "ChunkData", "NeedsGenerationTag");
 
     for (const chunk of chunkEntities) {
       const chunkData = this.ecs.getComponent(chunk, "ChunkData")!;
-      const chunkDirtyFlag = this.ecs.getComponent(chunk, "DirtyFlag")!;
 
-      if (!chunkDirtyFlag.isDirty) continue;
-
-      const world = chunkData.ownedByWorld;
+      const world = chunkData.worldId;
       const worldInfo = this.ecs.getComponent(world, "WorldInfo")!;
       const worldData = this.ecs.getComponent(world, "WorldData")!;
       const size = worldInfo.CHUNK_SIZE;
@@ -42,11 +46,11 @@ export class ChunkBuilder implements System {
           const worldX = x + chunkPos.x * size;
           const worldZ = z + chunkPos.z * size;
           const perlinHeight = Math.abs(
-            worldData.noise.perlin2(worldX/100, worldZ/100)
-              + worldData.noise.perlin2(worldX/80, worldZ/80)
-              + worldData.noise.perlin2(worldX/30, worldZ/30)
+            this.noise.perlin2(worldX/100, worldZ/100)
+              + this.noise.perlin2(worldX/80, worldZ/80)
+              + this.noise.perlin2(worldX/30, worldZ/30)
           );
-          const yHeight = Math.max(1, Math.floor(perlinHeight * worldInfo.CHUNK_HEIGHT));
+          const yHeight = Math.max(3, Math.floor(perlinHeight * worldInfo.CHUNK_HEIGHT));
           for (let y = 0; y < yHeight; y++) {
             // chunkSetBlock(chunkData, chunkDirtyFlag, worldInfo, x, y, z, 1);
             worldSetBlockAndUpdateMesh(this.ecs, world, worldX, y, worldZ, 1);
@@ -59,6 +63,9 @@ export class ChunkBuilder implements System {
 
         }
       }
+
+      this.ecs.removeComponent(chunk, "NeedsGenerationTag");
+      this.ecs.attachComponent(chunk, "DirtyFlag", { isDirty: true });
     }
   }
 }

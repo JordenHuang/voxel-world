@@ -1,6 +1,4 @@
-// systems/CameraSystem.ts
 import { mat4, vec3 } from "gl-matrix";
-
 import { ECS } from "../ecs";
 import { EventBus } from "../event-bus";
 import type { CameraData } from "../components";
@@ -14,22 +12,28 @@ export class CameraSystem implements System {
     this.ecs = ecs;
     this.eventBus = eventBus;
 
-    this.setupSubscriptions();
+    this.updateAspectRatio();
+
+    this.setupEventSubscriptions();
   }
 
-  private setupSubscriptions() {
-    // 監聽螢幕改變大小的事件
+  private setupEventSubscriptions() {
     this.eventBus.on("UPDATE_ASPECT_RATIO", (size) => {
-      const cameraEntities = this.ecs.query("CameraData");
-
-      for (const entity of cameraEntities) {
-        const camData = this.ecs.getComponent(entity, "CameraData")!;
-
-        camData.aspectRatio = size.width / size.height;
-
-        this.updateProjectionMatrix(camData);
-      }
+      this.updateAspectRatio(size);
     });
+  }
+
+  private updateAspectRatio(size?: {width: number, height: number}) {
+    const cameraEntity = this.ecs.queryFirst("MainCameraTag");
+    if (!cameraEntity) return;
+
+    const camData = this.ecs.getComponent(cameraEntity, "CameraData")!;
+
+    if (size) {
+      camData.aspectRatio = size.width / size.height;
+    }
+
+    this.updateProjectionMatrix(camData);
   }
 
   private updateViewMatrix(position: vec3, camData: CameraData) {
@@ -43,7 +47,7 @@ export class CameraSystem implements System {
   };
 
   public update(deltaTime: number) {
-    const cameraEntities = this.ecs.query("CameraTag", "Position", "Rotation", "CameraData");
+    const cameraEntities = this.ecs.query("CameraTag", "Position", "Rotation", "CameraData", "DirtyFlag");
 
     for (const entity of cameraEntities) {
       const camData = this.ecs.getComponent(entity, "CameraData")!;
@@ -53,19 +57,19 @@ export class CameraSystem implements System {
         const position = this.ecs.getComponent(entity, "Position")!;
         const rot = this.ecs.getComponent(entity, "Rotation")!;
 
-      const camFollower = this.ecs.getComponent(entity, "TargetFollower")!;
-      if (camFollower.targetEntityId != -1) {
-          const input = this.ecs.getComponent(camFollower.targetEntityId, "InputState")!;
-
-          // TODO: sensitivity
-          const sensitivity: number = 0.002
-    //       rot.pitch += input.deltaY * sensitivity * -1;
-    // // Limit yaw angle to avoid gimbal lock
-    // const pitchLimit = 89.9 * Math.PI / 180; // 89.9 degree
-    // rot.pitch = Math.max(Math.min(rot.pitch, pitchLimit), -pitchLimit);
-
-      // rot.yaw += input.deltaX * sensitivity;
-      }
+    //   const camFollower = this.ecs.getComponent(entity, "TargetFollower")!;
+    //   if (camFollower.targetEntityId != -1) {
+    //       const input = this.ecs.getComponent(camFollower.targetEntityId, "InputState")!;
+    //
+    //       // TODO: sensitivity
+    //       const sensitivity: number = 0.002
+    // //       rot.pitch += input.deltaY * sensitivity * -1;
+    // // // Limit yaw angle to avoid gimbal lock
+    // // const pitchLimit = 89.9 * Math.PI / 180; // 89.9 degree
+    // // rot.pitch = Math.max(Math.min(rot.pitch, pitchLimit), -pitchLimit);
+    //
+    //   // rot.yaw += input.deltaX * sensitivity;
+    //   }
 
         // Front vector
         vec3.set(camData.front,
@@ -82,7 +86,7 @@ export class CameraSystem implements System {
         // Up vector
         vec3.set(camData.up, 0, 1, 0); // Up is positive Y-axis
 
-        this.updateViewMatrix(position, camData);
+        this.updateViewMatrix(position.value, camData);
 
         camViewDirtyFlag.isDirty = false;
       }

@@ -2,12 +2,13 @@ import { vec3 } from "gl-matrix";
 import { ECS } from "../ecs";
 import type { Entity } from "../entities/";
 import type { WorldInfo } from "../components/";
-import type { ChunkPos, ChunkPosHash } from "../types/chunk";
-import { calculateChunkPosHash, extractChunkPosFromHash } from "../utils";
+import type { ChunkPosHash } from "../types/chunk";
+import { extractChunkPosFromHash } from "../utils";
 import { Shader } from "../shader";
 
+// TODO: ChunkOptions
 
-export function createChunk(ecs: ECS, gl: WebGL2RenderingContext, worldInfo: WorldInfo, world: Entity, chunkPosHash: ChunkPosHash, shader: Shader): Entity {
+export function createChunk(ecs: ECS, worldInfo: WorldInfo, world: Entity, chunkPosHash: ChunkPosHash, shader: Shader): Entity {
   const chunk = ecs.createEntity();
 
   const size = worldInfo.CHUNK_SIZE;
@@ -26,12 +27,11 @@ export function createChunk(ecs: ECS, gl: WebGL2RenderingContext, worldInfo: Wor
   ecs.attachComponent(chunk, "ChunkData", {
     blocks: new Uint8Array(volume),
     chunkPosHash: chunkPosHash,
-    ownedByWorld: world,
+    worldId: world,
     boundaryMin: vec3.fromValues(minX, minY, minZ),
     boundaryMax: vec3.fromValues(maxX, maxY, maxZ),
   });
 
-  ecs.attachComponent(chunk, "DirtyFlag", { isDirty: true });
   ecs.attachComponent(chunk, "Renderable", {
     vao: null,
     vertexCount: 0,

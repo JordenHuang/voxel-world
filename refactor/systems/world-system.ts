@@ -22,7 +22,7 @@ export class WorldSystem implements System {
   }
 
   public update(deltaTime: number) {
-    // Assume there's only one player, one world
+    // NOTE: Assume there's only one player, one world
     const playerEntity = this.ecs.queryFirst("PlayerTag", "Position");
     if (!playerEntity) return;
 
@@ -36,8 +36,8 @@ export class WorldSystem implements System {
 
     // Desire chunks
     const desireChunks: Set<ChunkPosHash> = new Set<ChunkPosHash>();
-    const x = Math.floor(playerPosition[0] / worldInfo.CHUNK_SIZE);
-    const z = Math.floor(playerPosition[2] / worldInfo.CHUNK_SIZE);
+    const x = Math.floor(playerPosition.value[0] / worldInfo.CHUNK_SIZE);
+    const z = Math.floor(playerPosition.value[2] / worldInfo.CHUNK_SIZE);
 
     const rd = worldInfo.RENDER_DISTANCE;
     for (let i = -rd; i <= rd; i++) {
@@ -53,11 +53,18 @@ export class WorldSystem implements System {
     // Add desire chunks to chunk list
     for (const desireChunk of desireChunks) {
       if (!worldData.chunks.has(desireChunk)) {
-        const newChunk = createChunk(
-          this.ecs, this.gl,
+        const newChunkEntity = createChunk(
+          this.ecs,
           worldInfo, worldEntity, desireChunk, this.shader,
         );
-        worldData.chunks.set(desireChunk, newChunk);
+        if (this.ecs.hasComponent(worldEntity, "WOverworldTag")) {
+          this.ecs.attachComponent(newChunkEntity, "WOverworldTag", {});
+        } else if (this.ecs.hasComponent(worldEntity, "WNetherTag")) {
+          this.ecs.attachComponent(newChunkEntity, "WNetherTag", {});
+        }
+        this.ecs.attachComponent(newChunkEntity, "NeedsGenerationTag", {});
+
+        worldData.chunks.set(desireChunk, newChunkEntity);
       }
     }
 

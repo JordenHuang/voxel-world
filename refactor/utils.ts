@@ -1,15 +1,48 @@
+import { vec3 } from "gl-matrix";
 import { ECS } from "./ecs";
 import type { ChunkPos, ChunkPosHash } from "./types/chunk";
 import type {
+  Rotation,
   WorldInfo,
   WorldData,
   ChunkData,
   DirtyFlag,
-  Renderable
+  Renderable,
 } from "./components";
 import type { Entity } from "./entities";
 import { Shader } from "./shader";
 import type { Mesh } from "./types/mesh";
+
+export interface DirectionVectors {
+  front: vec3;
+  right: vec3;
+  up: vec3;
+}
+
+export function getDirectionVectors(rot: Rotation): DirectionVectors {
+  const front = vec3.create();
+  // 1. 利用三角函數算出前方 (Front) 向量
+  // 這裡的公式對應你之前在 CameraSystem 寫的數學邏輯
+  front[0] = Math.cos(rot.yaw);
+  front[1] = 0
+  front[2] = Math.sin(rot.yaw);
+  vec3.normalize(front, front);
+
+  // 2. 利用外積 (Cross Product) 算出右方 (Right) 向量
+  // 前方向量 (Front) 與 世界正上方 (0, 1, 0) 做外積，就會得到右方
+  const right = vec3.create();
+  const worldUp = vec3.fromValues(0, 1, 0);
+  vec3.cross(right, front, worldUp);
+  vec3.normalize(right, right);
+
+  // 3. 再次利用外積算出真實的上方 (Up) 向量
+  // 右方向量 (Right) 與 前方向量 (Front) 做外積，就會得到相對於該實體頭頂的上方
+  const up = vec3.create();
+  vec3.cross(up, right, front);
+  vec3.normalize(up, up);
+
+  return { front, right, up };
+}
 
 export function calculateChunkPosHash(chunkPos: ChunkPos): string {
   return `${chunkPos.x},${chunkPos.z}`;

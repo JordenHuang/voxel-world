@@ -1,7 +1,8 @@
 import { vec3 } from "gl-matrix";
 
-// [ x, y, z ]
-export type Position = vec3;
+export interface Position {
+  value: vec3;  // [ x, y, z ]
+}
 
 // [ roll, pitch, yaw ]
 export interface Rotation {
