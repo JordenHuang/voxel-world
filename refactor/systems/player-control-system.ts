@@ -25,15 +25,23 @@ export class PlayerControlSystem implements System {
 
     for (const player of players) {
       // let movementSpeed = player.movementSpeed;  // TODO:
-      let movementSpeed = 0.003;
+      let movementSpeed = 0.015;
       vec3.set(moveDir, 0, 0, 0);
 
       const pos = this.ecs.getComponent(player, "Position")!;
       const rot = this.ecs.getComponent(player, "Rotation")!;
       const input = this.ecs.getComponent(player, "InputState")!;
 
-      const position = vec3.fromValues(pos.x, pos.y, pos.z);
       // const rotation = vec3.fromValues(rot.yaw, rot.pitch, rot.roll);
+
+      // Player rotation
+      // TODO: sensitivity
+      const sensitivity: number = 0.002
+      rot.yaw += input.deltaX * sensitivity;
+      rot.pitch += input.deltaY * sensitivity * -1;
+    // Limit yaw angle to avoid gimbal lock
+    const pitchLimit = 89.9 * Math.PI / 180; // 89.9 degree
+    rot.pitch = Math.max(Math.min(rot.pitch, pitchLimit), -pitchLimit);
 
       let front: vec3;
       let right: vec3;
@@ -80,28 +88,18 @@ export class PlayerControlSystem implements System {
       vec3.normalize(moveDir, moveDir);
 
       vec3.scale(moveDir, moveDir, movementSpeed * deltaTime);
-      vec3.add(position, position, moveDir);
-      pos.x = position[0];
-      pos.y = position[1];
-      pos.z = position[2];
+      vec3.add(pos, pos, moveDir);
 
       if (mainCamera) {
         const cameraRot = this.ecs.getComponent(mainCamera, "Rotation")!;
 
         if (input.reset) {
-          pos.x = 0;
-          pos.y = 0;
-          pos.z = 0;
-
-          cameraRot.yaw   = -Math.PI / 2;
+          vec3.set(pos, 0, 0, 0);
           cameraRot.pitch = 0;
-          // cameraRot.roll  = 0;
-          rot.yaw   = cameraRot.yaw;
+          cameraRot.yaw   = -Math.PI / 2;
+          cameraRot.roll  = 0;
           rot.pitch = cameraRot.pitch;
-          rot.roll  = cameraRot.roll;
-        } else {
           rot.yaw   = cameraRot.yaw;
-          rot.pitch = cameraRot.pitch;
           rot.roll  = cameraRot.roll;
         }
       }

@@ -15,11 +15,7 @@ export function createPlayer(ecs: ECS, options: PlayerOptions = {}): Entity {
 
   ecs.attachComponent(playerEntity, "PlayerTag", {});
 
-  ecs.attachComponent(playerEntity, "Position", {
-    x: options.position?.x ?? 0,
-    y: options.position?.y ?? 0,
-    z: options.position?.z ?? 0,
-  });
+  ecs.attachComponent(playerEntity, "Position", options.position ?? vec3.fromValues(0, 0, 0));
 
   ecs.attachComponent(playerEntity, "Rotation", {
     pitch: options.rotation?.pitch ?? 0,
@@ -47,6 +43,8 @@ export function createPlayer(ecs: ECS, options: PlayerOptions = {}): Entity {
     sneak: false,
     sprint: false,
     reset: false,
+    deltaX: 0,
+    deltaY: 0,
   });
 
   return playerEntity;

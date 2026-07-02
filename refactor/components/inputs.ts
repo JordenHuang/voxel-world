@@ -7,6 +7,8 @@ export interface InputState {
   sneak: boolean;
   sprint: boolean;
   reset: boolean;
+  deltaX: number;
+  deltaY: number;
 }
 
 export interface InputMap {

@@ -29,7 +29,7 @@ export class InputSystem implements System {
   }
 
   private setupSubscriptions() {
-    this.eventBus.on("MOUSE_MOVED", (data) => this.handleMouseMovement(data.deltaX, data.deltaY));
+    // this.eventBus.on("MOUSE_MOVED", (data) => this.handleMouseMovement(data.deltaX, data.deltaY));
   }
 
   private setupEventListeners() {
@@ -54,7 +54,7 @@ export class InputSystem implements System {
 
     // 監聽滑鼠移動 (當 Pointer Lock 啟動時)
     window.addEventListener("mousemove", (e) => {
-      if (this.isPointerLocked() || this.isFullScreen()) {
+      if (this.isPointerLocked()) {
         // When cursor locked
         this.mouseDeltaX += e.movementX;
         this.mouseDeltaY += e.movementY;
@@ -81,26 +81,6 @@ export class InputSystem implements System {
     window.addEventListener("mouseup", (e) => {
       this.mouse[e.button] = false;
     });
-
-    // 點擊 Canvas 啟動 Pointer Lock
-    window.addEventListener("click", (e) => {
-      this.eventBus.emit("ENTER_FULLSCREEN", {
-        isFullScreen: this.isFullScreen(),
-        isPointerLocked: this.isPointerLocked(),
-      });
-    });
-
-    window.addEventListener("resize", () => {
-      if (this.isFullScreen()) {
-        this.eventBus.emit("WINDOW_RESIZED", {
-          mode: "fullscreen",
-        });
-      } else {
-        this.eventBus.emit("WINDOW_RESIZED", {
-          mode:"default",
-        });
-      }
-    });
   }
 
   private handleMouseMovement(deltaX: number, deltaY: number) {
@@ -110,7 +90,8 @@ export class InputSystem implements System {
 
     for (const entity of playerEntities) {
       const rot = this.ecs.getComponent(entity, "Rotation")!;
-      const camData = this.ecs.getComponent(entity, "CameraData"); // 如果有的話
+      const camData = this.ecs.getComponent(entity, "CameraData");
+      const camDirtyFlag = this.ecs.getComponent(entity, "DirtyFlag");
 
     // Limit yaw angle to avoid gimbal lock
       rot.yaw += deltaX * sensitivity;
@@ -120,8 +101,8 @@ export class InputSystem implements System {
       rot.pitch = Math.max(Math.min(rot.pitch, pitchLimit), -pitchLimit);
 
       // ⚠️ 關鍵：標記相機資料為 "Dirty" (髒資料，需要重新計算矩陣)
-      if (camData) {
-        camData.isViewDirty = true;
+      if (camDirtyFlag) {
+        camDirtyFlag.isDirty = true;
       }
     }
   }
@@ -183,6 +164,8 @@ export class InputSystem implements System {
       state.sneak = this.isKeyDown(keymap.sneakKey);
       state.sprint = this.isKeyDown(keymap.sprintKey);
       state.reset = this.isKeyDown(keymap.resetKey);
+      state.deltaX = this.mouseDeltaX;
+      state.deltaY = this.mouseDeltaY;
     }
   }
 }

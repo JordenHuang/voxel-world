@@ -4,9 +4,6 @@ import { ECS } from "../ecs";
 import type { Entity } from "./entity";
 import type { Position } from "../components/";
 import type { Rotation } from "../components/";
-import type { CameraData } from "../components/";
-import type { TargetFollower } from "../components/";
-import type { CameraTag } from "../components/";
 
 export interface CameraOptions {
   position?: Position;
@@ -29,37 +26,61 @@ export function createCamera(ecs: ECS, options: CameraOptions = {}): Entity {
     ecs.attachComponent(cameraEntity, "MainCameraTag", {});
   }
 
-  ecs.attachComponent(cameraEntity, "Position", {
-    x: options.position?.x ?? 0,
-    y: options.position?.y ?? 5,
-    z: options.position?.z ?? 20,
+  const position = options.position ?? vec3.fromValues(0, 0, 0);
+  ecs.attachComponent(cameraEntity, "Position", position);
+
+  const pitch = options.rotation?.pitch ?? 0;
+  const yaw = options.rotation?.yaw ?? -Math.PI / 2;
+  const roll = options.rotation?.roll ?? 0;
+  ecs.attachComponent(cameraEntity, "Rotation", {
+    pitch: pitch,
+    yaw: yaw,
+    roll: roll,
   });
 
-  ecs.attachComponent(cameraEntity, "Rotation", {
-    pitch: options.rotation?.pitch ?? 0,
-    yaw: options.rotation?.yaw ?? -Math.PI / 2,
-    roll: options.rotation?.roll ?? 0,
-  });
+  const fov = options.fov ?? (45 * Math.PI) / 180;
+  const aspectRatio = options.aspectRatio ?? 800 / 600;
+  const near = options.near ?? 0.1;
+  const far = options.far ?? 1000.0;
+
+  const front = vec3.create();
+  const right = vec3.create();
+  const up = vec3.fromValues(0, 1, 0);
+    // Front vector
+    vec3.set(front,
+      Math.cos(pitch) * Math.cos(yaw),
+      Math.sin(pitch),
+      Math.cos(pitch) * Math.sin(yaw)
+    );
+    vec3.normalize(front, front);
+
+    // Right vector
+    vec3.cross(right, front, up);
+    vec3.normalize(right, right);
+
+    const lookAtTarget = vec3.create();
+    vec3.add(lookAtTarget, position, front);
+    const viewMatrix = mat4.lookAt(mat4.create(), position, lookAtTarget, up);
+  const projectionMatrix = mat4.perspective(mat4.create(), fov, aspectRatio, near, far);
 
   ecs.attachComponent(cameraEntity, "CameraData", {
-    fov: options.fov ?? (45 * Math.PI) / 180,
-    aspectRatio: options.aspectRatio ?? 800 / 600,
-    front: vec3.create(),
-    right: vec3.create(),
-    up: vec3.fromValues(0, 1, 0),
-    near: options.near ?? 0.1,
-    far: options.far ?? 1000.0,
-    viewMatrix: mat4.create(),
-    projectionMatrix: mat4.create(),
-    isViewDirty: true,
+    fov: fov,
+    aspectRatio: aspectRatio,
+    front: front,
+    right: right,
+    up: up,
+    near: near,
+    far: far,
+    viewMatrix: viewMatrix,
+    projectionMatrix: projectionMatrix,
   });
+
+  ecs.attachComponent(cameraEntity, "DirtyFlag", { isDirty: true });
 
   ecs.attachComponent(cameraEntity, "TargetFollower", {
     targetEntityId: options.targetEntityId ?? -1,
-    offsetX: 0,
-    offsetY: 0,
-    offsetZ: 0,
-    lerpFactor: 0.1,
+    offset: vec3.create(),
+    lerpFactor: 3,
   });
 
   // 5. 貼上「主相機」標籤

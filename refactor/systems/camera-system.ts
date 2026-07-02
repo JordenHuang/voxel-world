@@ -43,20 +43,35 @@ export class CameraSystem implements System {
   };
 
   public update(deltaTime: number) {
-    const cameraEntities = this.ecs.query("Position", "Rotation", "CameraData");
+    const cameraEntities = this.ecs.query("CameraTag", "Position", "Rotation", "CameraData");
 
     for (const entity of cameraEntities) {
       const camData = this.ecs.getComponent(entity, "CameraData")!;
+      const camViewDirtyFlag = this.ecs.getComponent(entity, "DirtyFlag")!;
 
-      if (camData.isViewDirty) {
-        const pos = this.ecs.getComponent(entity, "Position")!;
+      if (camViewDirtyFlag.isDirty) {
+        const position = this.ecs.getComponent(entity, "Position")!;
         const rot = this.ecs.getComponent(entity, "Rotation")!;
 
+      const camFollower = this.ecs.getComponent(entity, "TargetFollower")!;
+      if (camFollower.targetEntityId != -1) {
+          const input = this.ecs.getComponent(camFollower.targetEntityId, "InputState")!;
+
+          // TODO: sensitivity
+          const sensitivity: number = 0.002
+    //       rot.pitch += input.deltaY * sensitivity * -1;
+    // // Limit yaw angle to avoid gimbal lock
+    // const pitchLimit = 89.9 * Math.PI / 180; // 89.9 degree
+    // rot.pitch = Math.max(Math.min(rot.pitch, pitchLimit), -pitchLimit);
+
+      // rot.yaw += input.deltaX * sensitivity;
+      }
+
         // Front vector
-        camData.front = vec3.fromValues(
-          pos.x + Math.cos(rot.pitch) * Math.cos(rot.yaw),
-          pos.y + Math.sin(rot.pitch),
-          pos.z + Math.cos(rot.pitch) * Math.sin(rot.yaw)
+        vec3.set(camData.front,
+          Math.cos(rot.pitch) * Math.cos(rot.yaw),
+          Math.sin(rot.pitch),
+          Math.cos(rot.pitch) * Math.sin(rot.yaw)
         );
         vec3.normalize(camData.front, camData.front);
 
@@ -67,10 +82,9 @@ export class CameraSystem implements System {
         // Up vector
         vec3.set(camData.up, 0, 1, 0); // Up is positive Y-axis
 
-        const positionVec = vec3.fromValues(pos.x, pos.y, pos.z);
-        this.updateViewMatrix(positionVec, camData);
+        this.updateViewMatrix(position, camData);
 
-        camData.isViewDirty = false;
+        camViewDirtyFlag.isDirty = false;
       }
     }
   }

@@ -11,13 +11,10 @@ export interface CameraData {
   far: number;
   viewMatrix: mat4;
   projectionMatrix: mat4;
-  isViewDirty: boolean;
 }
 
 export interface TargetFollower {
   targetEntityId: Entity;
-  offsetX: number;
-  offsetY: number;
-  offsetZ: number;
+  offset: vec3; // [ x, y, z ]
   lerpFactor: number;  // Value between 0 ~ 1
 }

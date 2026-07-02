@@ -1,9 +1,12 @@
+import { mat4 } from "gl-matrix";
 import { ECS } from "../ecs";
 import { EventBus } from "../event-bus";
 import type { System } from "./index";
 import { Shader } from "../shader";
 import vsSource from "../shaders/cube.vert?raw";
 import fsSource from "../shaders/cube.frag?raw";
+
+type UniformSetter = (gl: WebGL2RenderingContext, shader: Shader) => void;
 
 export class RenderSystem implements System {
   private ecs: ECS;
@@ -13,13 +16,25 @@ export class RenderSystem implements System {
   private gl: WebGL2RenderingContext;
   private shader: Shader;
 
-  constructor(ecs: ECS, eventBus: EventBus, canvas: HTMLCanvasElement, gl: WebGL2RenderingContext) {
+  private modelMatrix: mat4 = mat4.create();
+  private modelViewMatrix: mat4 = mat4.create();
+  private texture: WebGLTexture;
+
+  private setCustomUniforms?: UniformSetter;
+
+  constructor(ecs: ECS, eventBus: EventBus, canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, shader: Shader, texture: WebGLTexture, setCustomUniforms?: UniformSetter) {
     this.ecs = ecs;
     this.eventBus = eventBus;
 
     this.canvas = canvas;
     this.gl = gl;
-    this.shader = new Shader(this.gl, vsSource, fsSource);
+    // this.shader = new Shader(this.gl, vsSource, fsSource);
+    this.shader = shader; // TODO: Should use Renderable's shader field
+
+    this.texture = texture;
+
+    if (setCustomUniforms)
+      this.setCustomUniforms = setCustomUniforms;
 
     this.gl.clearDepth(1.0); // Clear everything
     this.gl.enable(this.gl.DEPTH_TEST); // Enable depth testing
@@ -29,15 +44,26 @@ export class RenderSystem implements System {
     // gl.enable(gl.CULL_FACE); // Back face culling
     // gl.cullFace(gl.BACK);
 
-    this.setupSubscriptions();
+    this.setupEventListeners();
+    // this.setupSubscriptions();
   }
 
-  private setupSubscriptions() {
-    this.eventBus.on("ENTER_FULLSCREEN", async (data) => {
+  public isCanvasHasPointerLocked(canvas: HTMLCanvasElement): boolean {
+    return document.pointerLockElement === canvas;
+  }
+  public isCanvasFullScreen(canvas: HTMLCanvasElement): boolean {
+    return document.fullscreenElement === canvas;
+  }
+
+  // private setupSubscriptions() {
+  // }
+
+  private setupEventListeners() {
+    this.canvas.addEventListener("click", async () => {
       try {
-        if (!data.isFullScreen)
+        if (!this.isCanvasFullScreen(this.canvas))
           await this.canvas.requestFullscreen();
-        if (!data.isPointerLocked)
+        if (!this.isCanvasHasPointerLocked(this.canvas))
           await this.canvas.requestPointerLock();
       } catch (error) {
         console.error("Unable to enter fullscreen mode:", error);
@@ -47,12 +73,12 @@ export class RenderSystem implements System {
     const defaultCanvasWidth = this.canvas.width;
     const defaultCanvasHeight = this.canvas.height;
 
-    this.eventBus.on("WINDOW_RESIZED", (data) => {
-      if (data.mode === "default") {
+    window.addEventListener("resize", () => {
+      if (!this.isCanvasFullScreen(this.canvas)) {
         this.gl.canvas.width = defaultCanvasWidth;
         this.gl.canvas.height = defaultCanvasHeight;
       }
-      else if (data.mode === "fullscreen") {
+      else {
         this.gl.canvas.width = window.innerWidth;
         this.gl.canvas.height = window.innerHeight;
       }
@@ -71,19 +97,38 @@ export class RenderSystem implements System {
 
     gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-    const mainCamera = this.ecs.queryFirst("CameraData");
+    const mainCamera = this.ecs.queryFirst("MainCameraTag");
+    if (!mainCamera) {
+      console.log("[Render system] Nothing to draw");
+      return;
+    }
 
-    // // Bind shader and variables
-    // gl.useProgram(this.shader.program);
-    //
-    // if (mainCamera) {
-    //   const camData = this.ecs.getComponent(mainCamera, "CameraData")!;
-    //   gl.uniformMatrix4fv(this.shader.uniforms["uProjectionMatrix"] as WebGLUniformLocation, false, camData.projectionMatrix);
-    //   gl.uniformMatrix4fv(this.shader.uniforms["uViewMatrix"] as WebGLUniformLocation, false, camData.viewMatrix);
-    // }
-    //
-    // gl.activeTexture(gl.TEXTURE0);
-    // gl.bindTexture(gl.TEXTURE_2D, texture);
-    // gl.uniform1i(this.shader.uniforms["uSampler"] as WebGLUniformLocation, 0); // 告訴 Shader 圖片在 TEXTURE0
+    const camData = this.ecs.getComponent(mainCamera, "CameraData")!;
+
+    // Calculate model matrix
+    mat4.identity(this.modelMatrix);
+    mat4.mul(this.modelViewMatrix, camData.viewMatrix, this.modelMatrix);
+
+    // Bind shader and variables
+    gl.useProgram(this.shader.program);
+    gl.uniformMatrix4fv(this.shader.uniforms["uProjectionMatrix"] as WebGLUniformLocation, false, camData.projectionMatrix);
+    gl.uniformMatrix4fv(this.shader.uniforms["uModelViewMatrix"] as WebGLUniformLocation, false, this.modelViewMatrix);
+
+    if (this.setCustomUniforms) {
+      this.setCustomUniforms(gl, this.shader);
+    }
+
+    // Bind texture
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    gl.uniform1i(this.shader.uniforms["uSampler"] as WebGLUniformLocation, 0);
+
+    const renderables = this.ecs.query("Renderable");
+    for (const entity of renderables) {
+      const mesh = this.ecs.getComponent(entity, "Renderable")!;
+      // console.log(mesh.vertexCount);
+      gl.bindVertexArray(mesh.vao);
+      gl.drawElements(gl.TRIANGLES, mesh.vertexCount, gl.UNSIGNED_SHORT, 0);
+    }
   }
 }

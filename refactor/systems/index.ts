@@ -5,4 +5,7 @@ export * from "./input-system";
 export * from "./player-control-system";
 export * from "./render-system";
 export * from "./target-follower-system";
+export * from "./world-system";
+export * from "./chunk-builder";
+export * from "./chunk-mesh-builder";
 
