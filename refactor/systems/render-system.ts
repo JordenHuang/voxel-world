@@ -14,7 +14,6 @@ export class RenderSystem implements System {
 
   private canvas: HTMLCanvasElement;
   private gl: WebGL2RenderingContext;
-  private shader: Shader;
 
   private modelMatrix: mat4 = mat4.create();
   private modelViewMatrix: mat4 = mat4.create();
@@ -22,14 +21,12 @@ export class RenderSystem implements System {
 
   private setCustomUniforms?: UniformSetter;
 
-  constructor(ecs: ECS, eventBus: EventBus, canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, shader: Shader, texture: WebGLTexture, setCustomUniforms?: UniformSetter) {
+  constructor(ecs: ECS, eventBus: EventBus, canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, texture: WebGLTexture, setCustomUniforms?: UniformSetter) {
     this.ecs = ecs;
     this.eventBus = eventBus;
 
     this.canvas = canvas;
     this.gl = gl;
-    // this.shader = new Shader(this.gl, vsSource, fsSource);
-    this.shader = shader; // TODO: Should use Renderable's shader field
 
     this.texture = texture;
 
@@ -77,8 +74,7 @@ export class RenderSystem implements System {
       if (!this.isCanvasFullScreen(this.canvas)) {
         this.gl.canvas.width = defaultCanvasWidth;
         this.gl.canvas.height = defaultCanvasHeight;
-      }
-      else {
+      } else {
         this.gl.canvas.width = window.innerWidth;
         this.gl.canvas.height = window.innerHeight;
       }
@@ -109,22 +105,25 @@ export class RenderSystem implements System {
     mat4.identity(this.modelMatrix);
     mat4.mul(this.modelViewMatrix, camData.viewMatrix, this.modelMatrix);
 
-    // Bind shader and variables
-    gl.useProgram(this.shader.program);
-    gl.uniformMatrix4fv(this.shader.uniforms["uProjectionMatrix"] as WebGLUniformLocation, false, camData.projectionMatrix);
-    gl.uniformMatrix4fv(this.shader.uniforms["uModelViewMatrix"] as WebGLUniformLocation, false, this.modelViewMatrix);
-
-    if (this.setCustomUniforms) {
-      this.setCustomUniforms(gl, this.shader);
-    }
-
-    // Bind texture
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.texture);
-    gl.uniform1i(this.shader.uniforms["uSampler"] as WebGLUniformLocation, 0);
-
     const renderables = this.ecs.query("Renderable");
     for (const entity of renderables) {
+      const renderable = this.ecs.getComponent(entity, "Renderable")!;
+      if (!renderable.shader) continue;
+
+      // Bind shader and variables
+      gl.useProgram(renderable.shader.program);
+      gl.uniformMatrix4fv(renderable.shader.uniforms["uProjectionMatrix"] as WebGLUniformLocation, false, camData.projectionMatrix);
+      gl.uniformMatrix4fv(renderable.shader.uniforms["uModelViewMatrix"] as WebGLUniformLocation, false, this.modelViewMatrix);
+
+      if (this.setCustomUniforms) {
+        this.setCustomUniforms(gl, renderable.shader);
+      }
+
+      // Bind texture
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, this.texture);
+      gl.uniform1i(renderable.shader.uniforms["uSampler"] as WebGLUniformLocation, 0);
+
       const mesh = this.ecs.getComponent(entity, "Renderable")!;
       // console.log(mesh.vertexCount);
       gl.bindVertexArray(mesh.vao);

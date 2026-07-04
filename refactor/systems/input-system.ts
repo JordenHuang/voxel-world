@@ -93,7 +93,7 @@ export class InputSystem implements System {
       const camData = this.ecs.getComponent(entity, "CameraData");
       const camDirtyFlag = this.ecs.getComponent(entity, "DirtyFlag");
 
-    // Limit yaw angle to avoid gimbal lock
+      // Limit yaw angle to avoid gimbal lock
       rot.yaw += deltaX * sensitivity;
       rot.pitch += deltaY * sensitivity * -1;
 

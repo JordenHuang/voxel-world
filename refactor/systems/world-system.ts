@@ -2,23 +2,29 @@ import { ECS } from "../ecs";
 import { EventBus } from "../event-bus";
 import type { System } from "./index";
 import { createChunk } from "../entities/chunk";
-import type { Entity } from "../entities/";
 import type { WorldData } from "../components/";
-import type { ChunkPos, ChunkPosHash } from "../types/chunk";
-import { calculateChunkPosHash, extractChunkPosFromHash } from "../utils";
-import { Shader } from "../shader";
+import type { ChunkPosHash } from "../types/chunk";
+import {
+  ChunkUtils,
+  WorldUtils,
+} from "../utils/";
 
 export class WorldSystem implements System {
   private ecs: ECS;
   private eventBus: EventBus;
   private gl: WebGL2RenderingContext;
-  private shader: Shader;
 
-  constructor(ecs: ECS, eventBus: EventBus, gl: WebGL2RenderingContext, shader: Shader) {
+  // TODO: Scheduled updates, for water/sand fall/redstone
+  // components/scheduled-updates.ts
+  // export type ScheduledUpdates = {
+  //   // 記錄：[執行時間戳或幀數, X, Y, Z, 方塊類型]
+  //   queue: Array<{ tick: number, x: number, y: number, z: number, id: number }>;
+  // };
+
+  constructor(ecs: ECS, eventBus: EventBus, gl: WebGL2RenderingContext) {
     this.ecs = ecs;
     this.eventBus = eventBus;
     this.gl = gl;
-    this.shader = shader;
   }
 
   public update(deltaTime: number) {
@@ -42,7 +48,7 @@ export class WorldSystem implements System {
     const rd = worldInfo.RENDER_DISTANCE;
     for (let i = -rd; i <= rd; i++) {
       for (let j = -rd; j <= rd; j++) {
-        const chunkPos = calculateChunkPosHash({
+        const chunkPos = ChunkUtils.calculateChunkPosHash({
           x: i + x,
           z: j + z,
         });
@@ -50,12 +56,13 @@ export class WorldSystem implements System {
       }
     }
 
-    // Add desire chunks to chunk list
+    // Load new chunks
     for (const desireChunk of desireChunks) {
+      // Add desire chunks to chunk list
       if (!worldData.chunks.has(desireChunk)) {
         const newChunkEntity = createChunk(
           this.ecs,
-          worldInfo, worldEntity, desireChunk, this.shader,
+          worldInfo, worldEntity, desireChunk
         );
         if (this.ecs.hasComponent(worldEntity, "WOverworldTag")) {
           this.ecs.attachComponent(newChunkEntity, "WOverworldTag", {});
@@ -68,9 +75,27 @@ export class WorldSystem implements System {
       }
     }
 
+    // Chunks that are too far, unloaded it
     for (const chunk of worldData.chunks.keys()) {
-      // Unload chunks that's not in desire chunk list
       if (!desireChunks.has(chunk)) {
+        // Inform neighbor chunks to update mesh
+        const chunkPos = ChunkUtils.extractChunkPosFromHash(chunk);
+        const neighbors = [
+          { x: chunkPos.x + 1, z: chunkPos.z },
+          { x: chunkPos.x - 1, z: chunkPos.z },
+          { x: chunkPos.x, z: chunkPos.z + 1 },
+          { x: chunkPos.x, z: chunkPos.z - 1 }
+        ];
+
+        for (const n of neighbors) {
+          const neighborHash = ChunkUtils.calculateChunkPosHash(n);
+          const neighborEntity = WorldUtils.worldGetChunk(worldData, neighborHash);
+          if (neighborEntity !== undefined) {
+            this.ecs.attachComponent(neighborEntity, "DirtyFlag", { isDirty: true });
+          }
+        }
+
+      // Unload chunks that's not in desire chunk list
         this.unloadChunk(worldData, chunk);
       }
     }

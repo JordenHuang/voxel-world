@@ -55,8 +55,10 @@ export class Game {
   private ecs: ECS;
   private eventBus: EventBus;
 
-  private camera: Entity;
+  private blockShader: Shader;
+
   private player: Entity;
+  private camera: Entity;
   private world: Entity;
 
   private playerControlSystem: Systems.PlayerControlSystem;
@@ -90,6 +92,9 @@ export class Game {
     this.ecs = new ECS();
     this.eventBus = new EventBus();
 
+    let blockShader = new Shader(this.gl, vsSource, fsSource);
+    this.blockShader = blockShader;
+
     this.player = Entities.createPlayer(this.ecs);
     this.camera = Entities.createCamera(this.ecs, {
       aspectRatio: this.canvas.width / this.canvas.height,
@@ -105,11 +110,10 @@ export class Game {
     this.world = Entities.createMainWorld(this.ecs, worldOptions);
 
     const seed = 0;
-    let shader = new Shader(this.gl, vsSource, fsSource);
     let texture = loadTexture(this.gl, "./assets/frame.png");
 
-    const setCustomUniforms = (gl: WebGL2RenderingContext, shader: Shader) => {
-      gl.uniform1f(shader.uniforms["uChunkHeight"] as WebGLUniformLocation, worldOptions.CHUNK_HEIGHT);
+    const setCustomUniforms = (gl: WebGL2RenderingContext, blockShader: Shader) => {
+      gl.uniform1f(blockShader.uniforms["uChunkHeight"] as WebGLUniformLocation, worldOptions.CHUNK_HEIGHT);
       // gl.uniform1f(shader.uniforms["uTime"] as WebGLUniformLocation, this.player.position[0] * this.player.position[2]);
     }
 
@@ -120,11 +124,11 @@ export class Game {
     this.targetFollowerSystem = new Systems.TargetFollowerSystem(this.ecs);
     this.cameraSystem = new Systems.CameraSystem(this.ecs, this.eventBus);
 
-    this.worldSystem = new Systems.WorldSystem(this.ecs, this.eventBus, this.gl, shader);
+    this.worldSystem = new Systems.WorldSystem(this.ecs, this.eventBus, this.gl);
     this.OverworldChunkBuilder = new Systems.OverworldChunkBuilder(this.ecs, this.eventBus, seed);
-    this.chunkMeshBuilder = new Systems.ChunkMeshBuilder(this.ecs, this.eventBus, this.gl);
+    this.chunkMeshBuilder = new Systems.ChunkMeshBuilder(this.ecs, this.eventBus, this.gl, this.blockShader);
 
-    this.renderSystem = new Systems.RenderSystem(this.ecs, this.eventBus, this.canvas, this.gl, shader, texture, setCustomUniforms);
+    this.renderSystem = new Systems.RenderSystem(this.ecs, this.eventBus, this.canvas, this.gl, texture, setCustomUniforms);
   }
 
   private gameLoop(timestamp: number, texture: WebGLTexture) {
@@ -147,7 +151,7 @@ export class Game {
 
     const fps = Math.round(1 / deltaTime*1000);
     this.fpsAverage.add(fps);
-    this.fpsLabel.innerText = `FPS: ${this.fpsAverage.getAverage()}`;
+    this.fpsLabel.innerText = `FPS: ${this.fpsAverage.getAverage().toFixed(1)}`;
 
     requestAnimationFrame((timestamp) => this.gameLoop(timestamp, texture));
   }

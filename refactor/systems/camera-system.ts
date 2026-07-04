@@ -57,20 +57,6 @@ export class CameraSystem implements System {
         const position = this.ecs.getComponent(entity, "Position")!;
         const rot = this.ecs.getComponent(entity, "Rotation")!;
 
-    //   const camFollower = this.ecs.getComponent(entity, "TargetFollower")!;
-    //   if (camFollower.targetEntityId != -1) {
-    //       const input = this.ecs.getComponent(camFollower.targetEntityId, "InputState")!;
-    //
-    //       // TODO: sensitivity
-    //       const sensitivity: number = 0.002
-    // //       rot.pitch += input.deltaY * sensitivity * -1;
-    // // // Limit yaw angle to avoid gimbal lock
-    // // const pitchLimit = 89.9 * Math.PI / 180; // 89.9 degree
-    // // rot.pitch = Math.max(Math.min(rot.pitch, pitchLimit), -pitchLimit);
-    //
-    //   // rot.yaw += input.deltaX * sensitivity;
-    //   }
-
         // Front vector
         vec3.set(camData.front,
           Math.cos(rot.pitch) * Math.cos(rot.yaw),

@@ -1,18 +1,22 @@
 import { ECS } from "../ecs";
 import { EventBus } from "../event-bus";
 import type { System } from "./index";
-import type { ChunkData, WorldInfo, WorldData } from "../components";
-import {
-  calculateChunkPosHash,
-  extractChunkPosFromHash,
-  chunkGetBlock,
-  isAirBlock,
-  worldGetBlock,
-  generateVAO,
-  disposeRenderable,
-} from "../utils";
 import { Shader } from "../shader";
 import type { Mesh } from "../types/mesh";
+import type {
+  ChunkData,
+  WorldInfo,
+  WorldData,
+  Renderable,
+} from "../components";
+
+import {
+  BlockUtils,
+  ChunkUtils,
+  WorldUtils,
+  RenderableUtils,
+} from "../utils/";
+
 
 type Face = {
   name: string,
@@ -46,11 +50,32 @@ export class ChunkMeshBuilder implements System {
   private ecs: ECS;
   private eventBus: EventBus;
   private gl: WebGL2RenderingContext;
+  private shader: Shader;
 
-  constructor(ecs: ECS, eventBus: EventBus, gl: WebGL2RenderingContext) {
+  constructor(ecs: ECS, eventBus: EventBus, gl: WebGL2RenderingContext, shader: Shader) {
     this.ecs = ecs;
     this.eventBus = eventBus;
     this.gl = gl;
+    this.shader = shader;
+  }
+
+  private getBlockFromWorld(worldInfo: WorldInfo, worldData: WorldData, worldX: number, worldY: number, worldZ: number) {
+    if (worldY < 0 || worldY >= worldInfo.CHUNK_HEIGHT) return 0;
+
+    const chunkX = Math.floor(worldX / worldInfo.CHUNK_SIZE);
+    const chunkZ = Math.floor(worldZ / worldInfo.CHUNK_SIZE);
+    const chunkPosHash = ChunkUtils.calculateChunkPosHash({x: chunkX, z:  chunkZ});
+
+    const chunk = WorldUtils.worldGetChunk(worldData, chunkPosHash);
+    if (!chunk) return 0; // Chunk 未載入視為空氣
+
+    const chunkData = this.ecs.getComponent(chunk, "ChunkData");
+    if (!chunkData) return 0;
+
+    const localX = worldX - (chunkX * worldInfo.CHUNK_SIZE);
+    const localZ = worldZ - (chunkZ * worldInfo.CHUNK_SIZE);
+
+    return ChunkUtils.chunkGetBlock(chunkData, worldInfo, localX, worldY, localZ);
   }
 
   private build(chunkData: ChunkData, worldInfo: WorldInfo, worldData: WorldData): Mesh {
@@ -65,88 +90,67 @@ export class ChunkMeshBuilder implements System {
     for (let y = 0; y < worldInfo.CHUNK_HEIGHT; y++) {
       for (let z = 0; z < worldInfo.CHUNK_SIZE; z++) {
         for (let x = 0; x < worldInfo.CHUNK_SIZE; x++) {
-          if (isAirBlock(chunkGetBlock(chunkData, worldInfo, x, y, z))) continue;
+          if (BlockUtils.isAirBlock(ChunkUtils.chunkGetBlock(chunkData, worldInfo, x, y, z))) continue;
 
-          const chunkPos = extractChunkPosFromHash(chunkData.chunkPosHash);
+          const chunkPos = ChunkUtils.extractChunkPosFromHash(chunkData.chunkPosHash);
           const worldX = x + chunkPos.x * worldInfo.CHUNK_SIZE;
           const worldY = y;
           const worldZ = z + chunkPos.z * worldInfo.CHUNK_SIZE;
 
-          // if (NO_FACE_CULLING) {
-          //   const vertexOffset = vertices.length / 3;
-          //
-          //   // 2. 推入加上空間位移的頂點座標
-          //   for (let i = 0; i < CubeMesh.positions.length; i += 3) {
-          //     vertices.push(CubeMesh.positions[i+0]! + worldX);
-          //     vertices.push(CubeMesh.positions[i+1]! + worldY);
-          //     vertices.push(CubeMesh.positions[i+2]! + worldZ);
-          //   }
-          //
-          //   // 3. 推入 UV 座標
-          //   uvs.push(...CubeMesh.uvs);
-          //
-          //   // 🌟 4. 推入索引，並加上剛剛記錄好的偏移量
-          //   // 這裡直接一個一個推入即可，不需要 i += 3，因為我們就是要遍歷所有的索引
-          //   for (let i = 0; i < CubeMesh.indices.length; i++) {
-          //     indices.push(CubeMesh.indices[i]! + vertexOffset);
-          //   }
-          // } else {
-            for (const face of this.BLOCK_MESH.faces) {
-              const neighborId = chunkGetBlock(chunkData, worldInfo,
-                x + face.dir[0],
-                y + face.dir[1],
-                z + face.dir[2]
-              );
+          for (const face of this.BLOCK_MESH.faces) {
+            const neighborId = ChunkUtils.chunkGetBlock(chunkData, worldInfo,
+              x + face.dir[0],
+              y + face.dir[1],
+              z + face.dir[2]
+            );
 
-              // Neighbor is not air, means this face is invisible from player, so no need to render this face
-              if (!isAirBlock(neighborId)) {
-                continue;
-              }
-
-              const chunkNeighborId = worldGetBlock(
-              this.ecs,
-              worldInfo,
-              worldData,
-                worldX+face.dir[0],
-                worldY+face.dir[1],
-                worldZ+face.dir[2]
-              );
-
-              // If neighbor block in neighbor chunk is also air, means this face is visible from player, render it
-              if (isAirBlock(chunkNeighborId)) {
-                // Generate vertices
-                for (let i = 0; i < face.offset.length; i += 3) {
-                  vertices.push(
-                    worldX + face.offset[i+0]!,
-                    worldY + face.offset[i+1]!,
-                    worldZ + face.offset[i+2]!
-                  );
-                }
-
-                const faceAOs = this.getAOs(worldInfo, worldData, chunkData, face, worldX, worldY, worldZ);
-                aos.push(...faceAOs);
-
-                uvs.push(...this.BLOCK_MESH.uvs);
-
-                // Quad Flip (https://0fps.net/2013/07/03/ambient-occlusion-for-minecraft-like-worlds/)
-                if (faceAOs[0] + faceAOs[2] <= faceAOs[1] + faceAOs[3]) {
-                  // 翻轉切割方向
-                  indices.push(
-                    vertexCounter + 0, vertexCounter + 1, vertexCounter + 3,
-                    vertexCounter + 1, vertexCounter + 2, vertexCounter + 3
-                  );
-                } else {
-                  indices.push(
-                    vertexCounter + 0, vertexCounter + 1, vertexCounter + 2,
-                    vertexCounter + 0, vertexCounter + 2, vertexCounter + 3
-                  );
-                }
-
-                vertexCounter += 4;
-              }
+            // Neighbor is not air, means this face is invisible from player, so no need to render this face
+            if (!BlockUtils.isAirBlock(neighborId)) {
+              continue;
             }
 
-          // }
+            worldData.chunks
+            const chunkNeighborId = this.getBlockFromWorld(
+              worldInfo,
+              worldData,
+              worldX+face.dir[0],
+              worldY+face.dir[1],
+              worldZ+face.dir[2]
+            );
+
+            // If neighbor block in neighbor chunk is also air, means this face is visible from player, render it
+            if (BlockUtils.isAirBlock(chunkNeighborId)) {
+              // Generate vertices
+              for (let i = 0; i < face.offset.length; i += 3) {
+                vertices.push(
+                  worldX + face.offset[i+0]!,
+                  worldY + face.offset[i+1]!,
+                  worldZ + face.offset[i+2]!
+                );
+              }
+
+              const faceAOs = this.getAOs(worldInfo, worldData, chunkData, face, worldX, worldY, worldZ);
+              aos.push(...faceAOs);
+
+              uvs.push(...this.BLOCK_MESH.uvs);
+
+              // Quad Flip (https://0fps.net/2013/07/03/ambient-occlusion-for-minecraft-like-worlds/)
+              if (faceAOs[0] + faceAOs[2] <= faceAOs[1] + faceAOs[3]) {
+                // 翻轉切割方向
+                indices.push(
+                  vertexCounter + 0, vertexCounter + 1, vertexCounter + 3,
+                  vertexCounter + 1, vertexCounter + 2, vertexCounter + 3
+                );
+              } else {
+                indices.push(
+                  vertexCounter + 0, vertexCounter + 1, vertexCounter + 2,
+                  vertexCounter + 0, vertexCounter + 2, vertexCounter + 3
+                );
+              }
+
+              vertexCounter += 4;
+            }
+          }
         }
       }
     }
@@ -167,7 +171,7 @@ export class ChunkMeshBuilder implements System {
     return 3 - occluded;
   }
 
-  private getAOs(worldInfo: WorldInfo, worldData: WorldData, chunkData: ChunkData, face: Face, worldX: number, worldY: number, worldZ: number /* worldCoord: vec3 */): [number, number, number, number] {
+  private getAOs(worldInfo: WorldInfo, worldData: WorldData, chunkData: ChunkData, face: Face, worldX: number, worldY: number, worldZ: number): [number, number, number, number] {
     /* Look at each face from it's normal position
      * a b c
      * d _ e
@@ -194,9 +198,9 @@ export class ChunkMeshBuilder implements System {
       const cY = worldY + face.u[1] * du + face.v[1] * dv;
       const cZ = worldZ + face.u[2] * du + face.v[2] * dv;
 
-      const side1 = !isAirBlock(worldGetBlock(this.ecs, worldInfo, worldData, s1X, s1Y, s1Z));
-      const side2 = !isAirBlock(worldGetBlock(this.ecs, worldInfo, worldData, s2X, s2Y, s2Z));
-      const corner = !isAirBlock(worldGetBlock(this.ecs, worldInfo, worldData, cX, cY, cZ));
+      const side1 = !BlockUtils.isAirBlock(this.getBlockFromWorld(worldInfo, worldData, s1X, s1Y, s1Z));
+      const side2 = !BlockUtils.isAirBlock(this.getBlockFromWorld(worldInfo, worldData, s2X, s2Y, s2Z));
+      const corner = !BlockUtils.isAirBlock(this.getBlockFromWorld(worldInfo, worldData, cX, cY, cZ));
 
       const ao = this.vertexAmbientOcclusion(side1, side2, corner);
       aos.push(ao);
@@ -205,22 +209,35 @@ export class ChunkMeshBuilder implements System {
   }
 
   public update(deltaTime: number) {
-    const chunkEntities = this.ecs.query(/*"ChunkTag"*/ "ChunkData", "DirtyFlag", "Renderable");
+    const chunks = this.ecs.query("ChunkTag", "ChunkData", "DirtyFlag");
 
-    for (const chunk of chunkEntities) {
+    for (const chunk of chunks) {
       const chunkDirtyFlag = this.ecs.getComponent(chunk, "DirtyFlag")!;
       if (!chunkDirtyFlag.isDirty) continue;
 
-      const renderable = this.ecs.getComponent(chunk, "Renderable")!;
       const chunkData = this.ecs.getComponent(chunk, "ChunkData")!;
+
       const world = chunkData.worldId;
       const worldInfo = this.ecs.getComponent(world, "WorldInfo")!;
       const worldData = this.ecs.getComponent(world, "WorldData")!;
 
-      disposeRenderable(this.gl, renderable);
+      // Clean up old buffer data
+      const oldRenderable = this.ecs.getComponent(chunk, "Renderable");
+      if (oldRenderable) RenderableUtils.disposeRenderable(this.gl, oldRenderable);
+
+      // New buffer data
+      const renderable: Renderable = {
+        shader: this.shader, 
+        vao: null,
+        vertexCount: 0,
+        buffers: null
+      };
 
       const mesh = this.build(chunkData, worldInfo, worldData);
-      [renderable.vao, renderable.vertexCount] = generateVAO(this.gl, renderable.shader, mesh, false);
+      renderable.shader = this.shader;
+      [renderable.vao, renderable.vertexCount] = RenderableUtils.generateVAO(this.gl, this.shader, mesh, false);
+
+      this.ecs.attachComponent(chunk, "Renderable", renderable);
 
       chunkDirtyFlag.isDirty = false;
     }

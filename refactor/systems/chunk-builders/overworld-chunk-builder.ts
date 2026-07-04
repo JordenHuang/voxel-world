@@ -2,10 +2,11 @@ import Perlin from "../../thirdparty/perlin";
 import { ECS } from "../../ecs";
 import { EventBus } from "../../event-bus";
 import type { System } from "../index";
+
 import {
-  extractChunkPosFromHash,
-  worldSetBlockAndUpdateMesh,
-} from "../../utils";
+  ChunkUtils,
+  WorldUtils,
+} from "../../utils/";
 
 export class OverworldChunkBuilder implements System {
   private ecs: ECS;
@@ -38,7 +39,7 @@ export class OverworldChunkBuilder implements System {
       const size = worldInfo.CHUNK_SIZE;
       const height = worldInfo.CHUNK_HEIGHT;
 
-      const chunkPos = extractChunkPosFromHash(chunkData.chunkPosHash);
+      const chunkPos = ChunkUtils.extractChunkPosFromHash(chunkData.chunkPosHash);
 
       // Generate blocks in chunk
       for (let x = 0; x < size; x++) {
@@ -52,8 +53,8 @@ export class OverworldChunkBuilder implements System {
           );
           const yHeight = Math.max(3, Math.floor(perlinHeight * worldInfo.CHUNK_HEIGHT));
           for (let y = 0; y < yHeight; y++) {
-            // chunkSetBlock(chunkData, chunkDirtyFlag, worldInfo, x, y, z, 1);
-            worldSetBlockAndUpdateMesh(this.ecs, world, worldX, y, worldZ, 1);
+            const index = ChunkUtils.chunkGetIndex(worldInfo, x, y, z);
+            chunkData.blocks[index] = 1;
           }
 
           // for (let y = 0; y < 1; y++) {
@@ -66,6 +67,23 @@ export class OverworldChunkBuilder implements System {
 
       this.ecs.removeComponent(chunk, "NeedsGenerationTag");
       this.ecs.attachComponent(chunk, "DirtyFlag", { isDirty: true });
+
+      // Inform neighbor chunks to update
+      const neighbors = [
+        { x: chunkPos.x + 1, z: chunkPos.z },
+        { x: chunkPos.x - 1, z: chunkPos.z },
+        { x: chunkPos.x, z: chunkPos.z + 1 },
+        { x: chunkPos.x, z: chunkPos.z - 1 }
+      ];
+
+      for (const n of neighbors) {
+        const hash = ChunkUtils.calculateChunkPosHash(n);
+        const neighborEntity = WorldUtils.worldGetChunk(worldData, hash);
+
+        if (neighborEntity !== undefined) {
+          this.ecs.attachComponent(neighborEntity, "DirtyFlag", { isDirty: true });
+        }
+      }
     }
   }
 }

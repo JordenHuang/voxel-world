@@ -1,4 +1,6 @@
 ## TODO
-- [] Refactor systems
-- [] Refactor utils
+- [x] Refactor systems
+- [x] Refactor utils
+- [] Data packing
+- [] System schedule system
 

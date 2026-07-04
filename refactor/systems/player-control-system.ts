@@ -2,7 +2,7 @@ import { vec3 } from "gl-matrix";
 import { ECS } from "../ecs";
 import { EventBus } from "../event-bus";
 import type { System } from "./index";
-import { getDirectionVectors } from "../utils";
+import { MathUtils } from "../utils/";
 
 export class PlayerControlSystem implements System {
   private ecs: ECS;
@@ -39,7 +39,7 @@ export class PlayerControlSystem implements System {
       rot.pitch = Math.max(Math.min(rot.pitch, pitchLimit), -pitchLimit);
 
       // Calculate move direction base on input
-      const dv = getDirectionVectors(rot);
+      const dv = MathUtils.getDirectionVectors(rot);
       const front = dv.front;
       const right = dv.right;
       const up    = dv.up;
@@ -74,21 +74,16 @@ export class PlayerControlSystem implements System {
 
       // Update velocity value
       vec3.scale(vel.value, moveDir, movementSpeed);
-      // console.log(...vel.value);
 
       // TODO: Remove it when reset key is not needed
-      // if (mainCamera) {
-      //   const cameraRot = this.ecs.getComponent(mainCamera, "Rotation");
-      //   if (cameraRot && input.reset) {
-      //     vec3.set(pos, 0, 0, 0);
-      //     cameraRot.pitch = 0;
-      //     cameraRot.yaw   = -Math.PI / 2;
-      //     cameraRot.roll  = 0;
-      //     rot.pitch = cameraRot.pitch;
-      //     rot.yaw   = cameraRot.yaw;
-      //     rot.roll  = cameraRot.roll;
-      //   }
-      // }
+      if (input.reset) {
+        const pos = this.ecs.getComponent(player, "Position")!;
+        if (pos) vec3.set(pos.value, 0, 0, 0);
+        rot.pitch = 0;
+        rot.yaw   = -Math.PI / 2;
+        rot.roll  = 0;
+        vec3.set(vel.value, 0, 0, 0);
+      }
 
     }
   }
