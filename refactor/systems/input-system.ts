@@ -83,6 +83,7 @@ export class InputSystem implements System {
     });
   }
 
+  // TODO: This should be removed
   private handleMouseMovement(deltaX: number, deltaY: number) {
     const sensitivity = 0.002;
     // 假設玩家擁有一個特定的 Tag，例如 "MainCameraTag" 或 "PlayerController"
@@ -149,7 +150,8 @@ export class InputSystem implements System {
   }
 
   public update(deltaTime: number) {
-    const entities = this.ecs.query("InputMap", "InputState");
+    // Query main player
+    const entities = this.ecs.query("MainPlayerTag", "InputMap", "InputState");
 
     for (const entity of entities) {
       const state = this.ecs.getComponent(entity, "InputState")!;

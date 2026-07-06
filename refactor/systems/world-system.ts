@@ -27,6 +27,12 @@ export class WorldSystem implements System {
     this.gl = gl;
   }
 
+  private unloadChunk(worldData: WorldData, chunk: ChunkPosHash) {
+    const chunkEntity = worldData.chunks.get(chunk)!;
+    this.ecs.destroyEntity(chunkEntity);
+    worldData.chunks.delete(chunk);
+  }
+
   public update(deltaTime: number) {
     // NOTE: Assume there's only one player, one world
     const playerEntity = this.ecs.queryFirst("PlayerTag", "Position");
@@ -69,6 +75,7 @@ export class WorldSystem implements System {
         } else if (this.ecs.hasComponent(worldEntity, "WNetherTag")) {
           this.ecs.attachComponent(newChunkEntity, "WNetherTag", {});
         }
+
         this.ecs.attachComponent(newChunkEntity, "NeedsGenerationTag", {});
 
         worldData.chunks.set(desireChunk, newChunkEntity);
@@ -100,12 +107,6 @@ export class WorldSystem implements System {
       }
     }
 
-  }
-
-  private unloadChunk(worldData: WorldData, chunk: ChunkPosHash) {
-    const chunkEntity = worldData.chunks.get(chunk)!;
-    this.ecs.destroyEntity(chunkEntity);
-    worldData.chunks.delete(chunk);
   }
 }
 

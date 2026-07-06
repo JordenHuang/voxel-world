@@ -67,10 +67,12 @@ export class Game {
   private renderSystem: Systems.RenderSystem;
   private targetFollowerSystem: Systems.TargetFollowerSystem;
   private movementSystem: Systems.MovementSystem;
+  private frustumCullingSystem: Systems.FrustumCullingSystem;
 
   private worldSystem: Systems.WorldSystem;
   private OverworldChunkBuilder: Systems.OverworldChunkBuilder;
   private chunkMeshBuilder: Systems.ChunkMeshBuilder;
+
 
   private fpsLabel: HTMLElement;
   private fpsAverage: SlidingFpsAverage;
@@ -95,7 +97,7 @@ export class Game {
     let blockShader = new Shader(this.gl, vsSource, fsSource);
     this.blockShader = blockShader;
 
-    this.player = Entities.createPlayer(this.ecs);
+    this.player = Entities.createPlayer(this.ecs, {isMainPlayer: true});
     this.camera = Entities.createCamera(this.ecs, {
       aspectRatio: this.canvas.width / this.canvas.height,
       targetEntityId: this.player,
@@ -128,6 +130,8 @@ export class Game {
     this.OverworldChunkBuilder = new Systems.OverworldChunkBuilder(this.ecs, this.eventBus, seed);
     this.chunkMeshBuilder = new Systems.ChunkMeshBuilder(this.ecs, this.eventBus, this.gl, this.blockShader);
 
+    this.frustumCullingSystem = new Systems.FrustumCullingSystem(this.ecs, this.eventBus);
+
     this.renderSystem = new Systems.RenderSystem(this.ecs, this.eventBus, this.canvas, this.gl, texture, setCustomUniforms);
   }
 
@@ -145,6 +149,7 @@ export class Game {
     this.OverworldChunkBuilder.update(deltaTime);
     this.chunkMeshBuilder.update(deltaTime);
 
+    this.frustumCullingSystem.update(deltaTime);
     this.renderSystem.update(deltaTime);
 
     this.inputSystem.clearFrameData();

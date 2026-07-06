@@ -25,12 +25,15 @@ export function createChunk(ecs: ECS, worldInfo: WorldInfo, world: Entity, chunk
 
   ecs.attachComponent(chunk, "ChunkTag", {});
 
+  ecs.attachComponent(chunk, "VolumeBoundary", {
+    boundaryMin: vec3.fromValues(minX, minY, minZ),
+    boundaryMax: vec3.fromValues(maxX, maxY, maxZ),
+  });
+
   ecs.attachComponent(chunk, "ChunkData", {
     blocks: new Uint8Array(volume),
     chunkPosHash: chunkPosHash,
     worldId: world,
-    boundaryMin: vec3.fromValues(minX, minY, minZ),
-    boundaryMax: vec3.fromValues(maxX, maxY, maxZ),
   });
 
 

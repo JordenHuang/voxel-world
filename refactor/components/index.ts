@@ -1,9 +1,10 @@
-import type { Position, Rotation } from "./transforms";
+import type { Position, Rotation, VolumeBoundary } from "./transforms";
 import type { Velocity } from "./physics";
 import type { CameraData, TargetFollower } from "./camera";
 import type {
   CameraTag, MainCameraTag,
   PlayerTag, MainPlayerTag,
+  VisibleInFrustumTag,
   ChunkTag,
   WOverworldTag,
   WNetherTag,
@@ -20,6 +21,7 @@ export interface ComponentMap {
   // Transforms
   Position: Position;
   Rotation: Rotation;
+  VolumeBoundary: VolumeBoundary;
 
   Velocity: Velocity;
 
@@ -32,6 +34,7 @@ export interface ComponentMap {
   MainCameraTag: MainCameraTag;
   PlayerTag: PlayerTag;
   MainPlayerTag: MainPlayerTag;
+  VisibleInFrustumTag: VisibleInFrustumTag;
   ChunkTag: ChunkTag;
   WOverworldTag: WOverworldTag;
   WNetherTag: WNetherTag;

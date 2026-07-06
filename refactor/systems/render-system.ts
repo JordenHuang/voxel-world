@@ -105,7 +105,9 @@ export class RenderSystem implements System {
     mat4.identity(this.modelMatrix);
     mat4.mul(this.modelViewMatrix, camData.viewMatrix, this.modelMatrix);
 
-    const renderables = this.ecs.query("Renderable");
+    // Only render meshes intersects with camera view frustum
+    const renderables = this.ecs.query("Renderable", "VisibleInFrustumTag");
+
     for (const entity of renderables) {
       const renderable = this.ecs.getComponent(entity, "Renderable")!;
       if (!renderable.shader) continue;
@@ -124,10 +126,9 @@ export class RenderSystem implements System {
       gl.bindTexture(gl.TEXTURE_2D, this.texture);
       gl.uniform1i(renderable.shader.uniforms["uSampler"] as WebGLUniformLocation, 0);
 
-      const mesh = this.ecs.getComponent(entity, "Renderable")!;
       // console.log(mesh.vertexCount);
-      gl.bindVertexArray(mesh.vao);
-      gl.drawElements(gl.TRIANGLES, mesh.vertexCount, gl.UNSIGNED_SHORT, 0);
+      gl.bindVertexArray(renderable.vao);
+      gl.drawElements(gl.TRIANGLES, renderable.vertexCount, gl.UNSIGNED_SHORT, 0);
     }
   }
 }

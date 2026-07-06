@@ -1,5 +1,6 @@
-import { mat4, vec3 } from "gl-matrix";
+import { mat4, vec4, vec3 } from "gl-matrix";
 import type { Entity } from "../entities/entity";
+import type { FrustumPlaneArray } from "../types/camera";
 
 export interface CameraData {
   fov: number;
@@ -11,6 +12,7 @@ export interface CameraData {
   far: number;
   viewMatrix: mat4;
   projectionMatrix: mat4;
+  frustumPlanes: FrustumPlaneArray;
 }
 
 export interface TargetFollower {

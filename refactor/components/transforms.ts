@@ -10,3 +10,8 @@ export interface Rotation {
   yaw: number;
   roll: number;
 }
+
+export interface VolumeBoundary {
+  boundaryMin: vec3; // min [ x, y, z ]
+  boundaryMax: vec3; // max [ x, y, z ]
+}

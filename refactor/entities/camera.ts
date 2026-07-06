@@ -1,4 +1,4 @@
-import { mat4, vec3 } from "gl-matrix";
+import { mat4, vec4, vec3 } from "gl-matrix";
 
 import { ECS } from "../ecs";
 import type { Entity } from "./entity";
@@ -47,6 +47,10 @@ export function createCamera(ecs: ECS, options: CameraOptions = {}): Entity {
 
     viewMatrix: mat4.create(),
     projectionMatrix: mat4.create(),
+    frustumPlanes: [
+      vec4.create(), vec4.create(), vec4.create(),
+      vec4.create(), vec4.create(), vec4.create(),
+    ],
   });
 
   ecs.attachComponent(cameraEntity, "DirtyFlag", { isDirty: true });
