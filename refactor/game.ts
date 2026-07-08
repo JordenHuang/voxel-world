@@ -8,8 +8,8 @@ import type { System } from "./systems/";
 import * as Entities from "./entities/";
 import * as Components from "./components/";
 import * as Systems from "./systems/";
+import * as Scheduler from "./scheduler";
 
-// import { RenderSystem } from "./renderer";
 import { GameRenderer } from "./renderer";
 import { ChunkRenderPass } from "./render-passes/chunk-render-pass";
 
@@ -58,6 +58,7 @@ export class Game {
 
   private ecs: ECS;
   private eventBus: EventBus;
+  private scheduler: Scheduler.SystemScheduler;
 
   private blockShader: Shader;
 
@@ -99,6 +100,10 @@ export class Game {
     this.ecs = new ECS();
     this.eventBus = new EventBus();
 
+    // Scheduler
+    this.scheduler = new Scheduler.SystemScheduler(this.ecs);
+
+    // Resources
     let blockShader = new Shader(this.gl, vsSource, fsSource);
     this.blockShader = blockShader;
 
@@ -137,7 +142,20 @@ export class Game {
 
     this.frustumCullingSystem = new Systems.FrustumCullingSystem(this.ecs, this.eventBus);
 
-    // this.renderer = new RenderSystem(this.eventBus, this.canvas, this.gl, texture, setCustomUniforms);
+    // Add to scheduler
+    this.scheduler.addSystem(Scheduler.Phase.PreUpdate, this.inputSystem);
+
+    this.scheduler.addSystem(Scheduler.Phase.OnUpdate, this.playerControlSystem);
+    this.scheduler.addSystem(Scheduler.Phase.OnUpdate, this.movementSystem);
+    this.scheduler.addSystem(Scheduler.Phase.OnUpdate, this.targetFollowerSystem);
+    this.scheduler.addSystem(Scheduler.Phase.OnUpdate, this.cameraSystem);
+
+    this.scheduler.addSystem(Scheduler.Phase.OnUpdate, this.worldSystem);
+    this.scheduler.addSystem(Scheduler.Phase.OnUpdate, this.OverworldChunkBuilder);
+    this.scheduler.addSystem(Scheduler.Phase.OnUpdate, this.chunkMeshBuilder);
+
+    this.scheduler.addSystem(Scheduler.Phase.PostUpdate, this.frustumCullingSystem);
+
     this.renderer = new GameRenderer(this.eventBus, this.canvas, this.gl);
     this.renderer.addPass(new ChunkRenderPass(this.gl, this.blockShader, texture));
   }
@@ -146,17 +164,7 @@ export class Game {
     const deltaTime = (timestamp - this.lastTimestamp); // In millisecond
     this.lastTimestamp = timestamp;
 
-    this.inputSystem.update(deltaTime);
-    this.playerControlSystem.update(deltaTime);
-    this.movementSystem.update(deltaTime);
-    this.targetFollowerSystem.update(deltaTime);
-    this.cameraSystem.update(deltaTime);
-
-    this.worldSystem.update(deltaTime);
-    this.OverworldChunkBuilder.update(deltaTime);
-    this.chunkMeshBuilder.update(deltaTime);
-
-    this.frustumCullingSystem.update(deltaTime);
+    this.scheduler.tick(deltaTime);
 
     this.renderer.draw(this.ecs);
 
