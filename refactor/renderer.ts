@@ -140,7 +140,7 @@ export class GameRenderer {
 
   private canvas: HTMLCanvasElement;
   private gl: WebGL2RenderingContext;
-  // private cameraUBO: WebGLBuffer;
+  private transformUBO!: WebGLBuffer;
 
   // Order matters
   private passes: RenderPass[] = [];
@@ -151,7 +151,7 @@ export class GameRenderer {
     this.gl = gl;
 
     this.setupGlobalState();
-    // this.setupUBO();
+    this.setupUBO();
     this.setupEventListeners();
   }
 
@@ -207,12 +207,13 @@ export class GameRenderer {
     return document.fullscreenElement === canvas;
   }
 
-  // private setupUBO() {
-  //   this.cameraUBO = this.gl.createBuffer()!;
-  //   this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.cameraUBO);
-  //   this.gl.bufferData(this.gl.UNIFORM_BUFFER, 128, this.gl.DYNAMIC_DRAW);
-  //   this.gl.bindBufferBase(this.gl.UNIFORM_BUFFER, 0, this.cameraUBO);
-  // }
+  private setupUBO() {
+    this.transformUBO = this.gl.createBuffer();
+    this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.transformUBO);
+    this.gl.bufferData(this.gl.UNIFORM_BUFFER, 128, this.gl.DYNAMIC_DRAW);
+    this.gl.bindBufferBase(this.gl.UNIFORM_BUFFER, 0, this.transformUBO);
+    this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, null);
+  }
 
   public addPass(pass: RenderPass): void {
     this.passes.push(pass);
@@ -221,7 +222,7 @@ export class GameRenderer {
   public draw(ecs: ECS): void {
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-    // this.updateGlobalUBO(ecs);
+    this.updateGlobalUBO(ecs);
 
     for (const pass of this.passes) {
       pass.execute(ecs);
@@ -231,8 +232,14 @@ export class GameRenderer {
   private updateGlobalUBO(ecs: ECS) {
     const camera = ecs.queryFirst("MainCameraTag", "CameraData");
     if (!camera) return;
-  
+
     const camData = ecs.getComponent(camera, "CameraData")!;
-    // ... 將 camData.viewMatrix 和 projectionMatrix 上傳到 this.cameraUBO ...
+    const transformData = new Float32Array(32);
+    transformData.set(camData.viewMatrix, 0);
+    transformData.set(camData.projectionMatrix, 16);
+
+    this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, this.transformUBO);
+    this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, 0, transformData);
+    this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, null);
   }
 }

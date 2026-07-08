@@ -22,24 +22,18 @@ export class ChunkRenderPass implements RenderPass {
 
     gl.useProgram(this.shader.program);
 
-
-
-    const mainCamera = ecs.queryFirst("MainCameraTag");
-    if (!mainCamera) {
-      console.log("[Renderer] Nothing to draw");
-      return;
-    }
-    const camData = ecs.getComponent(mainCamera, "CameraData")!;
-    gl.uniformMatrix4fv(this.shader.uniforms["uProjectionMatrix"] as WebGLUniformLocation, false, camData.projectionMatrix);
-    gl.uniformMatrix4fv(this.shader.uniforms["uViewMatrix"] as WebGLUniformLocation, false, camData.viewMatrix);
-
-
     // Get visible chunks
     const visibleChunks = ecs.query("Renderable", "ChunkTag", "ChunkData", "VisibleInFrustumTag");
     for (const chunk of visibleChunks) {
       const chunkData = ecs.getComponent(chunk, "ChunkData")!;
       const chunkWorldPos = ChunkUtils.extractChunkPosFromHash(chunkData.chunkPosHash);
-      gl.uniform3fv(this.shader.uniforms["uChunkWorldPos"] as WebGLUniformLocation, [chunkWorldPos.x*16, 0, chunkWorldPos.z*16]);
+      const worldInfo = ecs.getComponent(chunkData.worldId, "WorldInfo")!;
+
+      gl.uniform3fv(this.shader.uniforms["uChunkWorldPos"] as WebGLUniformLocation, [
+        chunkWorldPos.x * worldInfo.CHUNK_SIZE,
+        0,
+        chunkWorldPos.z * worldInfo.CHUNK_SIZE
+      ]);
 
       const renderable = ecs.getComponent(chunk, "Renderable")!;
 

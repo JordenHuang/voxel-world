@@ -16,13 +16,14 @@ layout(location = 0) in uint aChunkLocalPackedData;
 // MSB
 layout(location = 1) in uint aTexturePackedData;
 
+layout(std140) uniform TransformBlock {
+    mat4 uViewMatrix;
+    mat4 uProjectionMatrix;
+};
+
 uniform vec3 uChunkWorldPos;
 
 in vec2 aTextureCoord;
-
-uniform mat4 uModelMatrix;
-uniform mat4 uViewMatrix;
-uniform mat4 uProjectionMatrix;
 
 uniform float uChunkHeight;
 uniform float uTime; 

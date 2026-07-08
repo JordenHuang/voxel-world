@@ -18,6 +18,7 @@ Idea 1: Entities with `InputState` component
   - [x] Chunk render system
   - [x] render system, **calculate chunkPos when rendering** or save it when generating vao?
   - [x] Refactor packing/unpacking
+- [x] UBO (camera uniforms)
 
 ### 2026-07-06
 - [x] Re-implement frustum culling

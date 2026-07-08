@@ -133,7 +133,7 @@ export class Game {
 
     this.worldSystem = new Systems.WorldSystem(this.ecs, this.eventBus);
     this.OverworldChunkBuilder = new Systems.OverworldChunkBuilder(this.ecs, this.eventBus, seed);
-    this.chunkMeshBuilder = new Systems.ChunkMeshBuilder(this.ecs, this.eventBus, this.gl, this.blockShader);
+    this.chunkMeshBuilder = new Systems.ChunkMeshBuilder(this.ecs, this.eventBus, this.gl);
 
     this.frustumCullingSystem = new Systems.FrustumCullingSystem(this.ecs, this.eventBus);
 
