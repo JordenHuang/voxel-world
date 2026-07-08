@@ -12,7 +12,6 @@ import {
 export class WorldSystem implements System {
   private ecs: ECS;
   private eventBus: EventBus;
-  private gl: WebGL2RenderingContext;
 
   // TODO: Scheduled updates, for water/sand fall/redstone
   // components/scheduled-updates.ts
@@ -21,10 +20,9 @@ export class WorldSystem implements System {
   //   queue: Array<{ tick: number, x: number, y: number, z: number, id: number }>;
   // };
 
-  constructor(ecs: ECS, eventBus: EventBus, gl: WebGL2RenderingContext) {
+  constructor(ecs: ECS, eventBus: EventBus) {
     this.ecs = ecs;
     this.eventBus = eventBus;
-    this.gl = gl;
   }
 
   private unloadChunk(worldData: WorldData, chunk: ChunkPosHash) {

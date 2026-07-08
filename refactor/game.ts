@@ -9,9 +9,13 @@ import * as Entities from "./entities/";
 import * as Components from "./components/";
 import * as Systems from "./systems/";
 
+// import { RenderSystem } from "./renderer";
+import { GameRenderer } from "./renderer";
+import { ChunkRenderPass } from "./render-passes/chunk-render-pass";
+
 import { Shader } from "./shader";
-import vsSource from "./shaders/cube.vert?raw";
-import fsSource from "./shaders/cube.frag?raw";
+import vsSource from "./shaders/block.vert?raw";
+import fsSource from "./shaders/block.frag?raw";
 
 import { SlidingFpsAverage } from "./fps";
 
@@ -64,7 +68,8 @@ export class Game {
   private playerControlSystem: Systems.PlayerControlSystem;
   private cameraSystem: Systems.CameraSystem;
   private inputSystem: Systems.InputSystem;
-  private renderSystem: Systems.RenderSystem;
+  // private renderer: RenderSystem;
+  private renderer: GameRenderer;
   private targetFollowerSystem: Systems.TargetFollowerSystem;
   private movementSystem: Systems.MovementSystem;
   private frustumCullingSystem: Systems.FrustumCullingSystem;
@@ -126,13 +131,15 @@ export class Game {
     this.targetFollowerSystem = new Systems.TargetFollowerSystem(this.ecs);
     this.cameraSystem = new Systems.CameraSystem(this.ecs, this.eventBus);
 
-    this.worldSystem = new Systems.WorldSystem(this.ecs, this.eventBus, this.gl);
+    this.worldSystem = new Systems.WorldSystem(this.ecs, this.eventBus);
     this.OverworldChunkBuilder = new Systems.OverworldChunkBuilder(this.ecs, this.eventBus, seed);
     this.chunkMeshBuilder = new Systems.ChunkMeshBuilder(this.ecs, this.eventBus, this.gl, this.blockShader);
 
     this.frustumCullingSystem = new Systems.FrustumCullingSystem(this.ecs, this.eventBus);
 
-    this.renderSystem = new Systems.RenderSystem(this.ecs, this.eventBus, this.canvas, this.gl, texture, setCustomUniforms);
+    // this.renderer = new RenderSystem(this.eventBus, this.canvas, this.gl, texture, setCustomUniforms);
+    this.renderer = new GameRenderer(this.eventBus, this.canvas, this.gl);
+    this.renderer.addPass(new ChunkRenderPass(this.gl, this.blockShader, texture));
   }
 
   private gameLoop(timestamp: number, texture: WebGLTexture) {
@@ -150,7 +157,8 @@ export class Game {
     this.chunkMeshBuilder.update(deltaTime);
 
     this.frustumCullingSystem.update(deltaTime);
-    this.renderSystem.update(deltaTime);
+
+    this.renderer.draw(this.ecs);
 
     this.inputSystem.clearFrameData();
 

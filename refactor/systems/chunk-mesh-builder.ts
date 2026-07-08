@@ -1,7 +1,6 @@
 import { ECS } from "../ecs";
 import { EventBus } from "../event-bus";
 import type { System } from "./index";
-import { Shader } from "../shader";
 import type { Mesh } from "../types/mesh";
 import type {
   ChunkData,
@@ -50,13 +49,11 @@ export class ChunkMeshBuilder implements System {
   private ecs: ECS;
   private eventBus: EventBus;
   private gl: WebGL2RenderingContext;
-  private shader: Shader;
 
-  constructor(ecs: ECS, eventBus: EventBus, gl: WebGL2RenderingContext, shader: Shader) {
+  constructor(ecs: ECS, eventBus: EventBus, gl: WebGL2RenderingContext) {
     this.ecs = ecs;
     this.eventBus = eventBus;
     this.gl = gl;
-    this.shader = shader;
   }
 
   private getBlockFromWorld(worldInfo: WorldInfo, worldData: WorldData, worldX: number, worldY: number, worldZ: number) {
@@ -82,7 +79,6 @@ export class ChunkMeshBuilder implements System {
     const vertices: number[] = [];
     const indices: number[] = [];
     const uvs: number[] = [];
-    const aos: number[] = [];  // Ambient occlusion
     let vertexCounter = 0;
     const NO_FACE_CULLING: boolean = false;
 
@@ -120,23 +116,26 @@ export class ChunkMeshBuilder implements System {
 
             // If neighbor block in neighbor chunk is also air, means this face is visible from player, render it
             if (BlockUtils.isAirBlock(chunkNeighborId)) {
+              const faceAOs = this.getAOs(worldInfo, worldData, chunkData, face, worldX, worldY, worldZ);
               // Generate vertices
-              for (let i = 0; i < face.offset.length; i += 3) {
-                vertices.push(
-                  worldX + face.offset[i+0]!,
-                  worldY + face.offset[i+1]!,
-                  worldZ + face.offset[i+2]!
-                );
+              for (let i = 0; i < 4; i++) { // 4 corners
+                let chunkLocalPackedData = 0;
+                chunkLocalPackedData |= (x+face.offset[i*3 + 0]! << 23);
+                chunkLocalPackedData |= (y+face.offset[i*3 + 1]! << 14);
+                chunkLocalPackedData |= (z+face.offset[i*3 + 2]! <<  5);
+                chunkLocalPackedData |= (faceAOs[i]! <<  3);
+
+                vertices.push(chunkLocalPackedData);
+
+                let texturePackedData = 0;
+                texturePackedData |= (i << 30);
+                uvs.push(...this.BLOCK_MESH.uvs);
               }
 
-              const faceAOs = this.getAOs(worldInfo, worldData, chunkData, face, worldX, worldY, worldZ);
-              aos.push(...faceAOs);
-
-              uvs.push(...this.BLOCK_MESH.uvs);
-
+              // Add indices
               // Quad Flip (https://0fps.net/2013/07/03/ambient-occlusion-for-minecraft-like-worlds/)
               if (faceAOs[0] + faceAOs[2] <= faceAOs[1] + faceAOs[3]) {
-                // 翻轉切割方向
+                // Flip
                 indices.push(
                   vertexCounter + 0, vertexCounter + 1, vertexCounter + 3,
                   vertexCounter + 1, vertexCounter + 2, vertexCounter + 3
@@ -159,7 +158,6 @@ export class ChunkMeshBuilder implements System {
       positions: vertices,
       indices: indices,
       uvs: uvs,
-      aos: aos,  // Ambient occlusion
     };
   }
 
@@ -227,15 +225,13 @@ export class ChunkMeshBuilder implements System {
 
       // New buffer data
       const renderable: Renderable = {
-        shader: this.shader, 
         vao: null,
         vertexCount: 0,
         buffers: null
       };
 
       const mesh = this.build(chunkData, worldInfo, worldData);
-      renderable.shader = this.shader;
-      [renderable.vao, renderable.vertexCount] = RenderableUtils.generateVAO(this.gl, this.shader, mesh, false);
+      [renderable.vao, renderable.vertexCount] = RenderableUtils.generateVAO(this.gl, mesh, false);
 
       this.ecs.attachComponent(chunk, "Renderable", renderable);
 

@@ -9,9 +9,8 @@ export class Shader {
   constructor(gl: WebGL2RenderingContext, vsSource: string, fsSource: string) {
     this.gl = gl;
     this.program = this.initShaderProgram(vsSource, fsSource)!;
-    
-    // 魔法在這裡：自動提取所有變數！
-    this.extractAttributes();
+
+    // this.extractAttributes();
     this.extractUniforms();
   }
 
@@ -46,14 +45,13 @@ export class Shader {
         if (name.endsWith('[0]')) {
           name = name.substring(0, name.length - 3);
         }
-        
+
         const location = gl.getUniformLocation(this.program, info.name)!;
         this.uniforms[name] = location;
       }
     }
   }
 
-  // (略) initShaderProgram 的實作，就是你原本編譯 Shader 的那段邏輯
   private initShaderProgram(vsSource: string, fsSource: string): WebGLProgram | null {
     const gl = this.gl;
     const vertexShader = this.loadShader(gl.VERTEX_SHADER, vsSource);

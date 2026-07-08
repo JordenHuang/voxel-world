@@ -1,7 +1,6 @@
 
 ## TODO
 - https://github.com/SanderMertens/ecs-faq
-- [] Data packing
 - [] System schedule system
 - [] Re-implement raycasting and block placement/destruction
 - [] task queue (or Web worker)
@@ -13,6 +12,12 @@
 What should `PlayerControlSystem` control? Main player? All player? Or even animals/monsters?
 Idea 1: Entities with `InputState` component
 
+
+### 2026-07-08
+- [x] Data packing
+  - [x] Chunk render system
+  - [x] render system, **calculate chunkPos when rendering** or save it when generating vao?
+  - [x] Refactor packing/unpacking
 
 ### 2026-07-06
 - [x] Re-implement frustum culling
