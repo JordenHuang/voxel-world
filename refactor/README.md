@@ -1,7 +1,6 @@
 
 ## TODO
 - https://github.com/SanderMertens/ecs-faq
-- [] Highlight cursor pointed block
 - [] Different texture
 - [] Defer mechanism
 - [] task queue (or Web worker)
@@ -17,6 +16,7 @@ Idea 1: Entities with `InputState` component
 - [x] Re-implement raycasting and block placement/destruction
   - [x] Raycast util
   - [x] Player interaction system
+- [x] Highlight cursor pointed block
 
 ### 2026-07-08
 - [x] Data packing

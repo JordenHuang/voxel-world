@@ -32,7 +32,7 @@ type UV = number;
 type FaceVertexOffset = [number, number];
 
 export class ChunkMeshBuilder implements System {
-  public readonly BLOCK_MESH: {faces: Face[], uvs: UV[], faceVertexOffsets: [FaceVertexOffset, FaceVertexOffset, FaceVertexOffset, FaceVertexOffset]} = {
+  public static readonly BLOCK_MESH: {faces: Face[], uvs: UV[], faceVertexOffsets: [FaceVertexOffset, FaceVertexOffset, FaceVertexOffset, FaceVertexOffset]} = {
     faces: [
       { name: 'front',  dir: [ 0,  0,  1], offset: [0,1,1, 0,0,1, 1,0,1, 1,1,1], u: [ 1,  0,  0], v: [0,  1,  0] },
       { name: 'back',   dir: [ 0,  0, -1], offset: [1,1,0, 1,0,0, 0,0,0, 0,1,0], u: [-1,  0,  0], v: [0,  1,  0] },
@@ -74,7 +74,7 @@ export class ChunkMeshBuilder implements System {
           const worldY = y;
           const worldZ = z + chunkPos.z * worldInfo.CHUNK_SIZE;
 
-          for (const face of this.BLOCK_MESH.faces) {
+          for (const face of ChunkMeshBuilder.BLOCK_MESH.faces) {
             const neighborId = ChunkUtils.chunkGetBlock(chunkData, worldInfo,
               x + face.dir[0],
               y + face.dir[1],
@@ -111,7 +111,7 @@ export class ChunkMeshBuilder implements System {
 
                 let texturePackedData = 0;
                 texturePackedData |= (i << 30);
-                uvs.push(...this.BLOCK_MESH.uvs);
+                uvs.push(...ChunkMeshBuilder.BLOCK_MESH.uvs);
               }
 
               // Add indices
@@ -162,7 +162,7 @@ export class ChunkMeshBuilder implements System {
     worldZ = worldZ + face.dir[2];
 
     const aos: number[] = [];
-    for (const [du, dv] of this.BLOCK_MESH.faceVertexOffsets) {
+    for (const [du, dv] of ChunkMeshBuilder.BLOCK_MESH.faceVertexOffsets) {
       // Side1, d or e
       const s1X = worldX + face.u[0] * du;
       const s1Y = worldY + face.u[1] * du;

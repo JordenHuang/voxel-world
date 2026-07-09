@@ -1,5 +1,5 @@
 export interface RenderableBuffers {
   positions: WebGLBuffer,
   indices: WebGLBuffer,
-  uvs: WebGLBuffer,
+  uvs: WebGLBuffer | null,
 }

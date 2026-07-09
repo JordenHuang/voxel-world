@@ -21,6 +21,10 @@ export class GameRenderer {
     this.gl.clearDepth(1.0); // Clear everything
     this.gl.enable(this.gl.DEPTH_TEST); // Enable depth testing
     this.gl.depthFunc(this.gl.LEQUAL); // Near things obscure far things
+    this.gl.enable(this.gl.BLEND);
+    this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA); // Standard Alpha Blending
+
+    // this.gl.enable(this.gl.CULL_FACE);
 
     this.setupGlobalState();
     this.setupUBO();

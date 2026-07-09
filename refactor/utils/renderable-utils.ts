@@ -18,7 +18,7 @@ buffers: RenderableBuffers
   let vertexCount: number;
   let positionsBuffer: WebGLBuffer;
   let indicesBuffer: WebGLBuffer;
-  let uvsBuffer: WebGLBuffer;
+  let uvsBuffer: WebGLBuffer | null;
 
   let wireframeVertexCount: number;
   let wireframeBuffer: WebGLBuffer;
@@ -39,11 +39,15 @@ buffers: RenderableBuffers
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(mesh.indices), gl.STATIC_DRAW);
 
-  uvsBuffer = gl.createBuffer() as WebGLBuffer;
-  gl.bindBuffer(gl.ARRAY_BUFFER, uvsBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.uvs), gl.STATIC_DRAW);
-  gl.vertexAttribIPointer(ATTRIB_LOC_aTexturePackedData, 2, gl.UNSIGNED_INT, 0, 0);
-  gl.enableVertexAttribArray(ATTRIB_LOC_aTexturePackedData);
+  if (mesh.uvs) {
+    uvsBuffer = gl.createBuffer() as WebGLBuffer;
+    gl.bindBuffer(gl.ARRAY_BUFFER, uvsBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.uvs), gl.STATIC_DRAW);
+    gl.vertexAttribIPointer(ATTRIB_LOC_aTexturePackedData, 2, gl.UNSIGNED_INT, 0, 0);
+    gl.enableVertexAttribArray(ATTRIB_LOC_aTexturePackedData);
+  } else {
+    uvsBuffer = null;
+  }
 
   if (genWireframe === true) {
     let wireframeIndices: number[] = [];
@@ -81,7 +85,7 @@ export function disposeRenderable(gl: WebGL2RenderingContext, renderable: Render
 
   gl.deleteBuffer(renderable.buffers.positions);
   gl.deleteBuffer(renderable.buffers.indices);
-  gl.deleteBuffer(renderable.buffers.uvs);
+  if (renderable.buffers.uvs) gl.deleteBuffer(renderable.buffers.uvs);
 
   gl.deleteVertexArray(renderable.vao);
 

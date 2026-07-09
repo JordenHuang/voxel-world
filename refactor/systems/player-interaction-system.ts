@@ -57,6 +57,10 @@ export class PlayerInteractionSystem implements System {
         WorldUtils.worldSetBlock(this.ecs, worldData, worldInfo, x, y, z, 1);
       }
 
+      this.ecs.attachComponent(player, "PlayerLookAt", {
+        rayResult: rayResult,
+      });
+
       // // 4. 🌟 使用 Defer 系統進行結構性改變！
       // // 找到被打中的那個 Chunk 實體
       // const targetChunkEntity = this.chunkManager.getChunkEntityByPos(rayResult.hitPos);
@@ -67,6 +71,9 @@ export class PlayerInteractionSystem implements System {
       //
       //   // 順便貼上 DirtyFlag 讓 MeshBuilder 知道要重構網格
       //   cmd.deferAttach(targetChunkEntity, "DirtyFlag", { isDirty: true });
+
+    } else {
+      this.ecs.removeComponent(player, "PlayerLookAt");
     }
   }
 }

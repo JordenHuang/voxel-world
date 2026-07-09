@@ -17,9 +17,6 @@ export class ChunkRenderPass implements RenderPass {
   public execute(ecs: ECS): void {
     const gl = this.gl;
 
-    gl.enable(gl.DEPTH_TEST);
-    // this.gl.enable(this.gl.CULL_FACE);
-
     gl.useProgram(this.shader.program);
 
     // Get visible chunks

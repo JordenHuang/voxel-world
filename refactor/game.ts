@@ -12,10 +12,13 @@ import * as Scheduler from "./scheduler";
 
 import { GameRenderer } from "./renderer";
 import { ChunkRenderPass } from "./render-passes/chunk-render-pass";
+import { BlockMarkerRenderPass } from "./render-passes/block-marker-render-pass";
 
 import { Shader } from "./shader";
 import vsSource from "./shaders/block.vert?raw";
 import fsSource from "./shaders/block.frag?raw";
+import blockMarkerVS from "./shaders/marker.vert?raw";
+import blockMarkerFS from "./shaders/marker.frag?raw";
 
 import { SlidingFpsAverage } from "./fps";
 
@@ -61,6 +64,7 @@ export class Game {
   private scheduler: Scheduler.SystemScheduler;
 
   private blockShader: Shader;
+  private blockMarkerShader: Shader;
 
   private player: Entity;
   private camera: Entity;
@@ -105,8 +109,8 @@ export class Game {
     this.scheduler = new Scheduler.SystemScheduler(this.ecs);
 
     // Resources
-    let blockShader = new Shader(this.gl, vsSource, fsSource);
-    this.blockShader = blockShader;
+    this.blockShader = new Shader(this.gl, vsSource, fsSource);
+    this.blockMarkerShader = new Shader(this.gl, blockMarkerVS, blockMarkerFS);
 
     const worldOptions = {
       CHUNK_HEIGHT: 32,
@@ -164,6 +168,7 @@ export class Game {
 
     this.renderer = new GameRenderer(this.eventBus, this.canvas, this.gl);
     this.renderer.addPass(new ChunkRenderPass(this.gl, this.blockShader, texture));
+    this.renderer.addPass(new BlockMarkerRenderPass(this.gl, this.blockMarkerShader));
   }
 
   private gameLoop(timestamp: number, texture: WebGLTexture) {
@@ -172,7 +177,7 @@ export class Game {
 
     this.scheduler.tick(deltaTime);
 
-    this.renderer.draw(this.ecs);
+    this.renderer.draw(this.ecs, timestamp);
 
     this.inputSystem.clearFrameData();
 
