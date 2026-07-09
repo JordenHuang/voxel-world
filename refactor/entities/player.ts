@@ -4,18 +4,25 @@ import type { Entity } from "./entity";
 import type { Position, Rotation } from "../components/";
 
 export interface PlayerOptions {
+  isMainPlayer: boolean;
+  worldId: Entity;
   position?: Position;
   rotation?: Rotation;
-  isMainPlayer?: boolean;
+  name?: string;
 }
 
-export function createPlayer(ecs: ECS, options: PlayerOptions = {}): Entity {
+export function createPlayer(ecs: ECS, options: PlayerOptions): Entity {
   const playerEntity = ecs.createEntity();
 
   ecs.attachComponent(playerEntity, "PlayerTag", {});
 
   if (options.isMainPlayer)
     ecs.attachComponent(playerEntity, "MainPlayerTag", {});
+
+  ecs.attachComponent(playerEntity, "PlayerData", {
+    worldId: options.worldId,
+    name: options.name ?? "Guest",
+  });
 
   ecs.attachComponent(playerEntity, "Position", {
     value: options.position?.value ?? vec3.fromValues(0, 0, 0),

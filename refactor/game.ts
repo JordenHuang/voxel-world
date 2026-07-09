@@ -67,6 +67,7 @@ export class Game {
   private world: Entity;
 
   private playerControlSystem: Systems.PlayerControlSystem;
+  private playerInteractionSystem: Systems.PlayerInteractionSystem;
   private cameraSystem: Systems.CameraSystem;
   private inputSystem: Systems.InputSystem;
   // private renderer: RenderSystem;
@@ -107,19 +108,22 @@ export class Game {
     let blockShader = new Shader(this.gl, vsSource, fsSource);
     this.blockShader = blockShader;
 
-    this.player = Entities.createPlayer(this.ecs, {isMainPlayer: true});
-    this.camera = Entities.createCamera(this.ecs, {
-      aspectRatio: this.canvas.width / this.canvas.height,
-      targetEntityId: this.player,
-      isMainCamera: true,
-    } as Entities.CameraOptions);
-
     const worldOptions = {
       CHUNK_HEIGHT: 32,
       CHUNK_SIZE: 16,
       RENDER_DISTANCE: 8,
     };
     this.world = Entities.createMainWorld(this.ecs, worldOptions);
+
+    this.player = Entities.createPlayer(this.ecs, {
+      isMainPlayer: true,
+      worldId: this.world,
+    });
+    this.camera = Entities.createCamera(this.ecs, {
+      aspectRatio: this.canvas.width / this.canvas.height,
+      targetEntityId: this.player,
+      isMainCamera: true,
+    } as Entities.CameraOptions);
 
     const seed = 0;
     let texture = loadTexture(this.gl, "./assets/frame.png");
@@ -132,6 +136,7 @@ export class Game {
     // Systems
     this.inputSystem = new Systems.InputSystem(this.ecs, this.eventBus);
     this.playerControlSystem = new Systems.PlayerControlSystem(this.ecs, this.eventBus);
+    this.playerInteractionSystem = new Systems.PlayerInteractionSystem(this.ecs, this.eventBus);
     this.movementSystem = new Systems.MovementSystem(this.ecs);
     this.targetFollowerSystem = new Systems.TargetFollowerSystem(this.ecs);
     this.cameraSystem = new Systems.CameraSystem(this.ecs, this.eventBus);
@@ -143,18 +148,19 @@ export class Game {
     this.frustumCullingSystem = new Systems.FrustumCullingSystem(this.ecs, this.eventBus);
 
     // Add to scheduler
-    this.scheduler.addSystem(Scheduler.Phase.PreUpdate, this.inputSystem);
+    this.scheduler.addSystem(Scheduler.Phase.Input, this.inputSystem);
 
-    this.scheduler.addSystem(Scheduler.Phase.OnUpdate, this.playerControlSystem);
-    this.scheduler.addSystem(Scheduler.Phase.OnUpdate, this.movementSystem);
-    this.scheduler.addSystem(Scheduler.Phase.OnUpdate, this.targetFollowerSystem);
-    this.scheduler.addSystem(Scheduler.Phase.OnUpdate, this.cameraSystem);
+    this.scheduler.addSystem(Scheduler.Phase.Logic, this.playerControlSystem);
+    this.scheduler.addSystem(Scheduler.Phase.Logic, this.playerInteractionSystem);
+    this.scheduler.addSystem(Scheduler.Phase.Logic, this.movementSystem);
+    this.scheduler.addSystem(Scheduler.Phase.Physics, this.targetFollowerSystem);
+    this.scheduler.addSystem(Scheduler.Phase.Physics, this.cameraSystem);
 
-    this.scheduler.addSystem(Scheduler.Phase.OnUpdate, this.worldSystem);
-    this.scheduler.addSystem(Scheduler.Phase.OnUpdate, this.OverworldChunkBuilder);
-    this.scheduler.addSystem(Scheduler.Phase.OnUpdate, this.chunkMeshBuilder);
+    this.scheduler.addSystem(Scheduler.Phase.WorldManagement, this.worldSystem);
+    this.scheduler.addSystem(Scheduler.Phase.TerrainGeneration, this.OverworldChunkBuilder);
+    this.scheduler.addSystem(Scheduler.Phase.Meshing, this.chunkMeshBuilder);
 
-    this.scheduler.addSystem(Scheduler.Phase.PostUpdate, this.frustumCullingSystem);
+    this.scheduler.addSystem(Scheduler.Phase.PreRender, this.frustumCullingSystem);
 
     this.renderer = new GameRenderer(this.eventBus, this.canvas, this.gl);
     this.renderer.addPass(new ChunkRenderPass(this.gl, this.blockShader, texture));

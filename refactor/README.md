@@ -1,11 +1,11 @@
 
 ## TODO
 - https://github.com/SanderMertens/ecs-faq
-- [] System schedule system
-- [] Re-implement raycasting and block placement/destruction
+- [] Highlight cursor pointed block
+- [] Different texture
+- [] Defer mechanism
 - [] task queue (or Web worker)
 - [] Shadow base on sunlight
-- [] Highlight cursor pointed block
 - [] PlayerManager
 
 ## Design
@@ -13,12 +13,18 @@ What should `PlayerControlSystem` control? Main player? All player? Or even anim
 Idea 1: Entities with `InputState` component
 
 
+### 2026-07-09
+- [x] Re-implement raycasting and block placement/destruction
+  - [x] Raycast util
+  - [x] Player interaction system
+
 ### 2026-07-08
 - [x] Data packing
   - [x] Chunk render system
   - [x] render system, **calculate chunkPos when rendering** or save it when generating vao?
   - [x] Refactor packing/unpacking
 - [x] UBO (camera uniforms)
+- [x] System schedule system
 
 ### 2026-07-06
 - [x] Re-implement frustum culling

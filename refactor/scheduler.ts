@@ -3,9 +3,13 @@ import type { System } from "./systems";
 // import { CommandBuffer } from "./command-buffer";
 
 export enum Phase {
-  PreUpdate,
-  OnUpdate,
-  PostUpdate,
+  Input,
+  Logic,
+  Physics,
+  WorldManagement,
+  TerrainGeneration,
+  Meshing,
+  PreRender,
 }
 
 export class SystemScheduler {
@@ -30,10 +34,14 @@ export class SystemScheduler {
   }
 
   public tick(deltaTime: number) {
-    // 嚴格按照順序執行各個階段
-    this.runPhase(Phase.PreUpdate, deltaTime);
-    this.runPhase(Phase.OnUpdate, deltaTime);
-    this.runPhase(Phase.PostUpdate, deltaTime);
+    // Order matters
+    this.runPhase(Phase.Input, deltaTime);
+    this.runPhase(Phase.Logic, deltaTime);
+    this.runPhase(Phase.Physics, deltaTime);
+    this.runPhase(Phase.WorldManagement, deltaTime);
+    this.runPhase(Phase.TerrainGeneration, deltaTime);
+    this.runPhase(Phase.Meshing, deltaTime);
+    this.runPhase(Phase.PreRender, deltaTime);
   }
 
   private runPhase(phase: Phase, deltaTime: number) {

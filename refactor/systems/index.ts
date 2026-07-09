@@ -9,4 +9,5 @@ export * from "./world-system";
 export * from "./chunk-builders/overworld-chunk-builder";
 export * from "./chunk-mesh-builder";
 export * from "./frustum-culling-system";
+export * from "./player-interaction-system";
 

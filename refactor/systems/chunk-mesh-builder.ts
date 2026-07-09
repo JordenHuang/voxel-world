@@ -56,25 +56,6 @@ export class ChunkMeshBuilder implements System {
     this.gl = gl;
   }
 
-  private getBlockFromWorld(worldInfo: WorldInfo, worldData: WorldData, worldX: number, worldY: number, worldZ: number) {
-    if (worldY < 0 || worldY >= worldInfo.CHUNK_HEIGHT) return 0;
-
-    const chunkX = Math.floor(worldX / worldInfo.CHUNK_SIZE);
-    const chunkZ = Math.floor(worldZ / worldInfo.CHUNK_SIZE);
-    const chunkPosHash = ChunkUtils.calculateChunkPosHash({x: chunkX, z:  chunkZ});
-
-    const chunk = WorldUtils.worldGetChunk(worldData, chunkPosHash);
-    if (!chunk) return 0; // Chunk 未載入視為空氣
-
-    const chunkData = this.ecs.getComponent(chunk, "ChunkData");
-    if (!chunkData) return 0;
-
-    const localX = worldX - (chunkX * worldInfo.CHUNK_SIZE);
-    const localZ = worldZ - (chunkZ * worldInfo.CHUNK_SIZE);
-
-    return ChunkUtils.chunkGetBlock(chunkData, worldInfo, localX, worldY, localZ);
-  }
-
   private build(chunkData: ChunkData, worldInfo: WorldInfo, worldData: WorldData): Mesh {
     const vertices: number[] = [];
     const indices: number[] = [];
@@ -106,7 +87,8 @@ export class ChunkMeshBuilder implements System {
             }
 
             worldData.chunks
-            const chunkNeighborId = this.getBlockFromWorld(
+            const chunkNeighborId = WorldUtils.worldGetBlock(
+              this.ecs,
               worldInfo,
               worldData,
               worldX+face.dir[0],
@@ -196,9 +178,9 @@ export class ChunkMeshBuilder implements System {
       const cY = worldY + face.u[1] * du + face.v[1] * dv;
       const cZ = worldZ + face.u[2] * du + face.v[2] * dv;
 
-      const side1 = !BlockUtils.isAirBlock(this.getBlockFromWorld(worldInfo, worldData, s1X, s1Y, s1Z));
-      const side2 = !BlockUtils.isAirBlock(this.getBlockFromWorld(worldInfo, worldData, s2X, s2Y, s2Z));
-      const corner = !BlockUtils.isAirBlock(this.getBlockFromWorld(worldInfo, worldData, cX, cY, cZ));
+      const side1 = !BlockUtils.isAirBlock(WorldUtils.worldGetBlock(this.ecs, worldInfo, worldData, s1X, s1Y, s1Z));
+      const side2 = !BlockUtils.isAirBlock(WorldUtils.worldGetBlock(this.ecs, worldInfo, worldData, s2X, s2Y, s2Z));
+      const corner = !BlockUtils.isAirBlock(WorldUtils.worldGetBlock(this.ecs, worldInfo, worldData, cX, cY, cZ));
 
       const ao = this.vertexAmbientOcclusion(side1, side2, corner);
       aos.push(ao);

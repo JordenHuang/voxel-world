@@ -9,6 +9,8 @@ export interface InputState {
   reset: boolean;
   deltaX: number;
   deltaY: number;
+  mouseLeftClicked: boolean;
+  mouseRightClicked: boolean;
 }
 
 export interface InputMap {

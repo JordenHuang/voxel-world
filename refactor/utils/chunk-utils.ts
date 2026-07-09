@@ -1,5 +1,8 @@
+import { ECS } from "../ecs";
+import type { Entity } from "../entities/";
 import type {
   WorldInfo,
+  WorldData,
   ChunkData,
 } from "../components";
 
@@ -7,6 +10,8 @@ import type {
   ChunkPos,
   ChunkPosHash,
 } from "../types/chunk";
+
+import { WorldUtils } from "./index";
 
 export function calculateChunkPosHash(chunkPos: ChunkPos): string {
   return `${chunkPos.x},${chunkPos.z}`;
@@ -34,3 +39,35 @@ export function chunkGetBlock(chunkData: ChunkData, worldInfo: WorldInfo, x: num
   return chunkData.blocks[chunkGetIndex(worldInfo, x, y, z)] as number;
 }
 
+export function chunkSetBlock(
+  ecs: ECS,
+  chunk: Entity,
+  chunkData: ChunkData,
+  worldData: WorldData,
+  worldInfo: WorldInfo,
+  x: number, y: number, z: number,
+  id: number
+) {
+  if (chunkIsValidIndex(worldInfo, x, y, z)) {
+    chunkData.blocks[chunkGetIndex(worldInfo, x, y, z)] = id;
+    ecs.attachComponent(chunk, "DirtyFlag", { isDirty: true });
+    const chunkPos = extractChunkPosFromHash(chunkData.chunkPosHash);
+
+    // Inform neighbor chunks to update
+    const neighbors = [
+      { x: chunkPos.x + 1, z: chunkPos.z },
+      { x: chunkPos.x - 1, z: chunkPos.z },
+      { x: chunkPos.x, z: chunkPos.z + 1 },
+      { x: chunkPos.x, z: chunkPos.z - 1 }
+    ];
+
+    for (const n of neighbors) {
+      const hash = calculateChunkPosHash(n);
+      const neighborEntity = WorldUtils.worldGetChunk(worldData, hash);
+
+      if (neighborEntity !== undefined) {
+        ecs.attachComponent(neighborEntity, "DirtyFlag", { isDirty: true });
+      }
+    }
+  }
+}

@@ -168,6 +168,8 @@ export class InputSystem implements System {
       state.reset = this.isKeyDown(keymap.resetKey);
       state.deltaX = this.mouseDeltaX;
       state.deltaY = this.mouseDeltaY;
+      state.mouseLeftClicked = this.isButtonReleased("0");
+      state.mouseRightClicked = this.isButtonReleased("2");
     }
   }
 }

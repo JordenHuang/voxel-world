@@ -1,5 +1,6 @@
 import type { Position, Rotation, VolumeBoundary } from "./transforms";
 import type { Velocity } from "./physics";
+import type { PlayerData } from "./player";
 import type { CameraData, TargetFollower } from "./camera";
 import type {
   CameraTag, MainCameraTag,
@@ -24,6 +25,9 @@ export interface ComponentMap {
   VolumeBoundary: VolumeBoundary;
 
   Velocity: Velocity;
+
+  // Player
+  PlayerData: PlayerData;
 
   // Camera
   CameraData: CameraData;
@@ -61,6 +65,7 @@ export interface ComponentMap {
 
 export type ComponentName = keyof ComponentMap;
 
+export type * from "./player";
 export type * from "./camera";
 export type * from "./chunk";
 export type * from "./flags";
