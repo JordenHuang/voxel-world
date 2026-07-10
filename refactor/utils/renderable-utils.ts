@@ -42,8 +42,8 @@ buffers: RenderableBuffers
   if (mesh.uvs) {
     uvsBuffer = gl.createBuffer() as WebGLBuffer;
     gl.bindBuffer(gl.ARRAY_BUFFER, uvsBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.uvs), gl.STATIC_DRAW);
-    gl.vertexAttribIPointer(ATTRIB_LOC_aTexturePackedData, 2, gl.UNSIGNED_INT, 0, 0);
+    gl.bufferData(gl.ARRAY_BUFFER, new Uint32Array(mesh.uvs), gl.STATIC_DRAW);
+    gl.vertexAttribIPointer(ATTRIB_LOC_aTexturePackedData, 1, gl.UNSIGNED_INT, 0, 0);
     gl.enableVertexAttribArray(ATTRIB_LOC_aTexturePackedData);
   } else {
     uvsBuffer = null;

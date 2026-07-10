@@ -1,7 +1,8 @@
 
 ## TODO
 - https://github.com/SanderMertens/ecs-faq
-- [] Different texture
+- [] Player body, physics
+- [] Gravity
 - [] Defer mechanism
 - [] task queue (or Web worker)
 - [] Shadow base on sunlight
@@ -11,6 +12,9 @@
 What should `PlayerControlSystem` control? Main player? All player? Or even animals/monsters?
 Idea 1: Entities with `InputState` component
 
+
+### 2026-07-10
+- [x] Different texture
 
 ### 2026-07-09
 - [x] Re-implement raycasting and block placement/destruction
@@ -94,4 +98,5 @@ Refactor to ECS architecture
 - Texture `news.jpg`: https://pixabay.com/illustrations/cardinal-directions-directions-6372089/
 - Texture `placeholder.png`: https://openclipart.org/detail/244429/texture-mapping-test-image
 - Minecraft source code: https://github.com/WangTingZheng/mcp940/blob/master/src/minecraft/net/minecraft/init/Blocks.java
+- Texture atlas `terrain.png`: https://0fps.net/2013/07/09/texture-atlases-wrapping-and-mip-mapping/
 

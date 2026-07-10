@@ -18,6 +18,7 @@ import {
 
 
 type Face = {
+  id: number,
   name: string,
   dir: [number, number, number],
   // [ upper-left, lower-left, lower-right, upper-right ]
@@ -34,12 +35,12 @@ type FaceVertexOffset = [number, number];
 export class ChunkMeshBuilder implements System {
   public static readonly BLOCK_MESH: {faces: Face[], uvs: UV[], faceVertexOffsets: [FaceVertexOffset, FaceVertexOffset, FaceVertexOffset, FaceVertexOffset]} = {
     faces: [
-      { name: 'front',  dir: [ 0,  0,  1], offset: [0,1,1, 0,0,1, 1,0,1, 1,1,1], u: [ 1,  0,  0], v: [0,  1,  0] },
-      { name: 'back',   dir: [ 0,  0, -1], offset: [1,1,0, 1,0,0, 0,0,0, 0,1,0], u: [-1,  0,  0], v: [0,  1,  0] },
-      { name: 'top',    dir: [ 0,  1,  0], offset: [0,1,0, 0,1,1, 1,1,1, 1,1,0], u: [ 1,  0,  0], v: [0,  0, -1] },
-      { name: 'bottom', dir: [ 0, -1,  0], offset: [0,0,1, 0,0,0, 1,0,0, 1,0,1], u: [ 1,  0,  0], v: [0,  0,  1] },
-      { name: 'right',  dir: [ 1,  0,  0], offset: [1,1,1, 1,0,1, 1,0,0, 1,1,0], u: [ 0,  0, -1], v: [0,  1,  0] },
-      { name: 'left',   dir: [-1,  0,  0], offset: [0,1,0, 0,0,0, 0,0,1, 0,1,1], u: [ 0,  0,  1], v: [0,  1,  0] },
+      { id: 0, name: 'front',  dir: [ 0,  0,  1], offset: [0,1,1, 0,0,1, 1,0,1, 1,1,1], u: [ 1,  0,  0], v: [0,  1,  0] },
+      { id: 1, name: 'back',   dir: [ 0,  0, -1], offset: [1,1,0, 1,0,0, 0,0,0, 0,1,0], u: [-1,  0,  0], v: [0,  1,  0] },
+      { id: 2, name: 'top',    dir: [ 0,  1,  0], offset: [0,1,0, 0,1,1, 1,1,1, 1,1,0], u: [ 1,  0,  0], v: [0,  0, -1] },
+      { id: 3, name: 'bottom', dir: [ 0, -1,  0], offset: [0,0,1, 0,0,0, 1,0,0, 1,0,1], u: [ 1,  0,  0], v: [0,  0,  1] },
+      { id: 4, name: 'right',  dir: [ 1,  0,  0], offset: [1,1,1, 1,0,1, 1,0,0, 1,1,0], u: [ 0,  0, -1], v: [0,  1,  0] },
+      { id: 5, name: 'left',   dir: [-1,  0,  0], offset: [0,1,0, 0,0,0, 0,0,1, 0,1,1], u: [ 0,  0,  1], v: [0,  1,  0] },
     ],
     uvs: [0.0, 0.0,   0.0, 1.0,   1.0, 1.0,   1.0, 0.0],
     // [ upper-left, lower-left, lower-right, upper-right ]
@@ -67,7 +68,8 @@ export class ChunkMeshBuilder implements System {
     for (let y = 0; y < worldInfo.CHUNK_HEIGHT; y++) {
       for (let z = 0; z < worldInfo.CHUNK_SIZE; z++) {
         for (let x = 0; x < worldInfo.CHUNK_SIZE; x++) {
-          if (BlockUtils.isAirBlock(ChunkUtils.chunkGetBlock(chunkData, worldInfo, x, y, z))) continue;
+          const blockId = ChunkUtils.chunkGetBlock(chunkData, worldInfo, x, y, z);
+          if (BlockUtils.isAirBlock(blockId)) continue;
 
           const chunkPos = ChunkUtils.extractChunkPosFromHash(chunkData.chunkPosHash);
           const worldX = x + chunkPos.x * worldInfo.CHUNK_SIZE;
@@ -100,18 +102,20 @@ export class ChunkMeshBuilder implements System {
             if (BlockUtils.isAirBlock(chunkNeighborId)) {
               const faceAOs = this.getAOs(worldInfo, worldData, chunkData, face, worldX, worldY, worldZ);
               // Generate vertices
-              for (let i = 0; i < 4; i++) { // 4 corners
+              for (let i = 0; i < 4; i++) { // 4 corners, [ upper-left, lower-left, lower-right, upper-right ]
                 let chunkLocalPackedData = 0;
                 chunkLocalPackedData |= (x+face.offset[i*3 + 0]! << 23);
                 chunkLocalPackedData |= (y+face.offset[i*3 + 1]! << 14);
                 chunkLocalPackedData |= (z+face.offset[i*3 + 2]! <<  5);
                 chunkLocalPackedData |= (faceAOs[i]! <<  3);
+                chunkLocalPackedData |= (face.id);
 
                 vertices.push(chunkLocalPackedData);
 
                 let texturePackedData = 0;
                 texturePackedData |= (i << 30);
-                uvs.push(...ChunkMeshBuilder.BLOCK_MESH.uvs);
+                texturePackedData |= (blockId << 23);
+                uvs.push(texturePackedData);
               }
 
               // Add indices

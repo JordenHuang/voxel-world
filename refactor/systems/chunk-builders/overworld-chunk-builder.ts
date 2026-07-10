@@ -2,6 +2,7 @@ import Perlin from "../../thirdparty/perlin";
 import { ECS } from "../../ecs";
 import { EventBus } from "../../event-bus";
 import type { System } from "../index";
+import { BlockUtils } from "../../utils/";
 
 import {
   ChunkUtils,
@@ -44,6 +45,11 @@ export class OverworldChunkBuilder implements System {
       // Generate blocks in chunk
       for (let x = 0; x < size; x++) {
         for (let z = 0; z < size; z++) {
+          for (let y = 0; y < 4; y++) {
+            const index = ChunkUtils.chunkGetIndex(worldInfo, x, y, z);
+            chunkData.blocks[index] = BlockUtils.BlockId.STONE;
+          }
+
           const worldX = x + chunkPos.x * size;
           const worldZ = z + chunkPos.z * size;
           const perlinHeight = Math.abs(
@@ -51,10 +57,23 @@ export class OverworldChunkBuilder implements System {
               + this.noise.perlin2(worldX/80, worldZ/80)
               + this.noise.perlin2(worldX/30, worldZ/30)
           );
-          const yHeight = Math.max(3, Math.floor(perlinHeight * worldInfo.CHUNK_HEIGHT));
-          for (let y = 0; y < yHeight; y++) {
+
+          // const yHeight = Math.max(3, Math.floor(perlinHeight * worldInfo.CHUNK_HEIGHT - 4));
+          const yHeight = Math.round(perlinHeight * worldInfo.CHUNK_HEIGHT);
+          const dirtLayers = Math.round(Math.random() * 10);
+          for (let y = 4; y <= yHeight; y++) {
             const index = ChunkUtils.chunkGetIndex(worldInfo, x, y, z);
-            chunkData.blocks[index] = 1;
+
+            if (y < yHeight - dirtLayers) {
+              chunkData.blocks[index] = BlockUtils.BlockId.STONE;
+            } else if (y == yHeight) {
+              // if (Math.random() < 0.8)
+              //   chunkData.blocks[index] = BlockUtils.BlockId.GRASS;
+              // else
+                chunkData.blocks[index] = BlockUtils.BlockId.GRASS_DIRT;
+            } else {
+                chunkData.blocks[index] = BlockUtils.BlockId.DIRT;
+            }
           }
 
           // for (let y = 0; y < 1; y++) {

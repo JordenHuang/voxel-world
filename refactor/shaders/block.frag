@@ -19,7 +19,7 @@ void main(void) {
     texureRGB = pow(texureRGB, gamma);
         // texureRGB.rgb = voxelColor;
 
-        texureRGB = texureRGB * 0.001 + vec3(1, 1, 1);
+        // texureRGB = texureRGB * 0.001 + vec3(1, 1, 1);
         texureRGB = texureRGB * aoMultiplier;
         texture.a = 1.0;
 

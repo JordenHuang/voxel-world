@@ -130,7 +130,8 @@ export class Game {
     } as Entities.CameraOptions);
 
     const seed = 0;
-    let texture = loadTexture(this.gl, "./assets/frame.png");
+    // let texture = loadTexture(this.gl, "./assets/frame.png");
+    let texture = loadTexture(this.gl, "./assets/terrain.png");
 
     const setCustomUniforms = (gl: WebGL2RenderingContext, blockShader: Shader) => {
       gl.uniform1f(blockShader.uniforms["uChunkHeight"] as WebGLUniformLocation, worldOptions.CHUNK_HEIGHT);
@@ -177,7 +178,7 @@ export class Game {
 
     this.scheduler.tick(deltaTime);
 
-    this.renderer.draw(this.ecs, timestamp);
+    this.renderer.draw(this.ecs);
 
     this.inputSystem.clearFrameData();
 
