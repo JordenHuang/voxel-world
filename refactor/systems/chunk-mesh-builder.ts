@@ -114,7 +114,7 @@ export class ChunkMeshBuilder implements System {
 
                 let texturePackedData = 0;
                 texturePackedData |= (i << 30);
-                texturePackedData |= (blockId << 23);
+                texturePackedData |= (blockId << 22);
                 uvs.push(texturePackedData);
               }
 

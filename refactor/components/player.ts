@@ -4,6 +4,7 @@ import type { RaycastUtils } from "../utils/";
 export interface PlayerData {
   name: string;
   worldId: Entity;
+  isOnTheGround: boolean;
 }
 
 export interface PlayerLookAt {

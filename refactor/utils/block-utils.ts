@@ -4,6 +4,13 @@ export enum BlockId {
   STONE,
   DIRT,
   GRASS_DIRT,
+  LOG,
+
+  SNOW = 15,
+  WATER = 68,
+  LEAVES = 53,
+  LAVA = 255,
+
 }
 
 export function isAirBlock(id: number): boolean {

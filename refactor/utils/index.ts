@@ -4,3 +4,4 @@ export * as ChunkUtils from "./chunk-utils";
 export * as WorldUtils from "./world-utils";
 export * as RenderableUtils from "./renderable-utils";
 export * as RaycastUtils from "./raycast-utils";
+export * as PhysicUtils from "./physic-utils";

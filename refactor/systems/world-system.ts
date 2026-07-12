@@ -49,7 +49,7 @@ export class WorldSystem implements System {
     const x = Math.floor(playerPosition.value[0] / worldInfo.CHUNK_SIZE);
     const z = Math.floor(playerPosition.value[2] / worldInfo.CHUNK_SIZE);
 
-    const rd = worldInfo.RENDER_DISTANCE;
+    let rd = worldInfo.RENDER_DISTANCE;
     for (let i = -rd; i <= rd; i++) {
       for (let j = -rd; j <= rd; j++) {
         const chunkPos = ChunkUtils.calculateChunkPosHash({
@@ -100,7 +100,7 @@ export class WorldSystem implements System {
           }
         }
 
-      // Unload chunks that's not in desire chunk list
+        // Unload chunks that's not in desire chunk list
         this.unloadChunk(worldData, chunk);
       }
     }

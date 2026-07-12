@@ -58,7 +58,7 @@ export function createCamera(ecs: ECS, options: CameraOptions = {}): Entity {
   if (options.targetEntityId !== undefined) {
     ecs.attachComponent(cameraEntity, "TargetFollower", {
       targetEntityId: options.targetEntityId,
-      offset: vec3.create(),
+      offset: vec3.fromValues(0, 0.8, 0),
       lerpFactor: 3,
     });
   }

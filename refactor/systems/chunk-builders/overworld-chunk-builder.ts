@@ -31,7 +31,15 @@ export class OverworldChunkBuilder implements System {
   public update(deltaTime: number) {
     const chunkEntities = this.ecs.query("WOverworldTag", "ChunkData", "NeedsGenerationTag");
 
+    let chunksGeneratedThisFrame = 0;
+    const MAX_CHUNKS_PER_FRAME = 4;
+
     for (const chunk of chunkEntities) {
+      chunksGeneratedThisFrame++;
+      if (chunksGeneratedThisFrame >= MAX_CHUNKS_PER_FRAME) {
+          break; 
+      }
+
       const chunkData = this.ecs.getComponent(chunk, "ChunkData")!;
 
       const world = chunkData.worldId;
@@ -41,6 +49,7 @@ export class OverworldChunkBuilder implements System {
       const height = worldInfo.CHUNK_HEIGHT;
 
       const chunkPos = ChunkUtils.extractChunkPosFromHash(chunkData.chunkPosHash);
+      const genFloatingIsland = Math.random() < 0.01;
 
       // Generate blocks in chunk
       for (let x = 0; x < size; x++) {
@@ -58,8 +67,7 @@ export class OverworldChunkBuilder implements System {
               + this.noise.perlin2(worldX/30, worldZ/30)
           );
 
-          // const yHeight = Math.max(3, Math.floor(perlinHeight * worldInfo.CHUNK_HEIGHT - 4));
-          const yHeight = Math.round(perlinHeight * worldInfo.CHUNK_HEIGHT);
+          const yHeight = Math.round(perlinHeight * (worldInfo.CHUNK_HEIGHT / 3 * 2));
           const dirtLayers = Math.round(Math.random() * 10);
           for (let y = 4; y <= yHeight; y++) {
             const index = ChunkUtils.chunkGetIndex(worldInfo, x, y, z);
@@ -70,16 +78,20 @@ export class OverworldChunkBuilder implements System {
               // if (Math.random() < 0.8)
               //   chunkData.blocks[index] = BlockUtils.BlockId.GRASS;
               // else
-                chunkData.blocks[index] = BlockUtils.BlockId.GRASS_DIRT;
+              chunkData.blocks[index] = BlockUtils.BlockId.GRASS_DIRT;
             } else {
-                chunkData.blocks[index] = BlockUtils.BlockId.DIRT;
+              chunkData.blocks[index] = BlockUtils.BlockId.DIRT;
             }
           }
 
-          // for (let y = 0; y < 1; y++) {
-          //   chunkSetBlock(chunkData, chunkDirtyFlag, worldInfo, x, y, z, 1);
-          //   if (x == 0 && z == 0) chunkSetBlock(chunkData, chunkDirtyFlag, worldInfo, x, y+1, z, 1);
-          // }
+          // Floating island
+          if (genFloatingIsland) {
+            const islandHeight = Math.round(perlinHeight * (worldInfo.CHUNK_HEIGHT / 6));
+            for (let y = height-5 - islandHeight/2; y <= height-5 + islandHeight/2; y++) {
+              const index = ChunkUtils.chunkGetIndex(worldInfo, x, y, z);
+              chunkData.blocks[index] = BlockUtils.BlockId.LOG;
+            }
+          }
 
         }
       }

@@ -18,18 +18,19 @@ export class PlayerControlSystem implements System {
   private setupEventSubscriptions() {}
 
   public update(deltaTime: number) {
-    const players = this.ecs.query("PlayerTag", "Rotation", "Velocity", "InputState");
+    const players = this.ecs.query("PlayerTag", "Rotation", "Velocity", "InputState", "PlayerData");
     const moveDir = vec3.create();
 
     for (const player of players) {
       // TODO: Make movementSpeed and mouseSensitivity configuable
-      let movementSpeed = 0.015;
+      let movementSpeed = 0.008;
       const mouseSensitivity = 0.002
       vec3.set(moveDir, 0, 0, 0);
 
       const rot = this.ecs.getComponent(player, "Rotation")!;
       const vel = this.ecs.getComponent(player, "Velocity")!;
       const input = this.ecs.getComponent(player, "InputState")!;
+      const playerData = this.ecs.getComponent(player, "PlayerData")!;
 
       // Update Player rotation
       rot.yaw += input.deltaX * mouseSensitivity;
@@ -60,25 +61,31 @@ export class PlayerControlSystem implements System {
       // Lock Y-axis movement
       moveDir[1] = 0;
 
-      if (input.jump) {
-        vec3.add(moveDir, moveDir, up);
-      }
-      if (input.sneak) {
-        vec3.sub(moveDir, moveDir, up);
-      }
       if (input.sprint) {
-        movementSpeed *= 5;
+        movementSpeed *= 3;
+      }
+
+      if (input.jump && (playerData.isOnTheGround || input.sprint)) {
+        vec3.add(moveDir, moveDir, up);
+        vel.value[1] = 0.9 * movementSpeed;
+        playerData.isOnTheGround = false;
+      }
+      if (input.sneak/*  && !playerData.isOnTheGround*/) {
+        vel.value[1] = -2.0 * movementSpeed;
+        vec3.sub(moveDir, moveDir, up);
       }
 
       vec3.normalize(moveDir, moveDir);
 
       // Update velocity value
-      vec3.scale(vel.value, moveDir, movementSpeed);
+      // vec3.scale(vel.value, moveDir, movementSpeed);
+      vel.value[0] = moveDir[0] * movementSpeed;
+      vel.value[2] = moveDir[2] * movementSpeed;
 
       // TODO: Remove it when reset key is not needed
       if (input.reset) {
-        const pos = this.ecs.getComponent(player, "Position")!;
-        if (pos) vec3.set(pos.value, 0, 0, 0);
+        const pos = this.ecs.getComponent(player, "Position");
+        if (pos) vec3.set(pos.value, 0, 100, 0);
         rot.pitch = 0;
         rot.yaw   = -Math.PI / 2;
         rot.roll  = 0;

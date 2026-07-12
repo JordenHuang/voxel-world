@@ -106,6 +106,7 @@ export class BlockMarkerRenderPass implements RenderPass {
 
       gl.bindVertexArray(this.vao);
       gl.drawElements(gl.TRIANGLES, this.vertexCount, gl.UNSIGNED_SHORT, 0);
+      gl.bindVertexArray(null);
     }
   }
 }

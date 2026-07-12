@@ -1,5 +1,5 @@
 import type { Position, Rotation, VolumeBoundary } from "./transforms";
-import type { Velocity } from "./physics";
+import type { Velocity, AABB } from "./physics";
 import type { PlayerData, PlayerLookAt } from "./player";
 import type { CameraData, TargetFollower } from "./camera";
 import type {
@@ -24,7 +24,9 @@ export interface ComponentMap {
   Rotation: Rotation;
   VolumeBoundary: VolumeBoundary;
 
+  // Physics
   Velocity: Velocity;
+  AABB: AABB;
 
   // Player
   PlayerData: PlayerData;

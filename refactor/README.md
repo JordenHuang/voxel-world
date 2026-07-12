@@ -1,8 +1,6 @@
 
 ## TODO
 - https://github.com/SanderMertens/ecs-faq
-- [] Player body, physics
-- [] Gravity
 - [] Defer mechanism
 - [] task queue (or Web worker)
 - [] Shadow base on sunlight
@@ -12,6 +10,10 @@
 What should `PlayerControlSystem` control? Main player? All player? Or even animals/monsters?
 Idea 1: Entities with `InputState` component
 
+
+### 2026-07-11
+- [x] Player body, physics
+- [x] Gravity
 
 ### 2026-07-10
 - [x] Different texture

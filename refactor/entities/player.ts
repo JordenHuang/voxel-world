@@ -22,6 +22,7 @@ export function createPlayer(ecs: ECS, options: PlayerOptions): Entity {
   ecs.attachComponent(playerEntity, "PlayerData", {
     worldId: options.worldId,
     name: options.name ?? "Guest",
+    isOnTheGround: false,
   });
 
   ecs.attachComponent(playerEntity, "Position", {
@@ -36,6 +37,12 @@ export function createPlayer(ecs: ECS, options: PlayerOptions): Entity {
 
   ecs.attachComponent(playerEntity, "Velocity", {
     value: vec3.create(),
+  });
+
+  ecs.attachComponent(playerEntity, "AABB", {
+    halfWidth: 0.3,
+    halfHeight: 0.9,
+    halfDepth: 0.3,
   });
 
   ecs.attachComponent(playerEntity, "InputMap", {
@@ -60,6 +67,8 @@ export function createPlayer(ecs: ECS, options: PlayerOptions): Entity {
     reset: false,
     deltaX: 0,
     deltaY: 0,
+    mouseLeftClicked: false,
+    mouseRightClicked: false,
   });
 
   return playerEntity;

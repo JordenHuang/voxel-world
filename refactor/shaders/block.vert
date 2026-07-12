@@ -12,7 +12,7 @@ layout(location = 0) in uint aChunkLocalPackedData;
 
 // LSB
 // corner id: 2-bits (uv)
-// texture id: 7-bits
+// texture id: 8-bits
 // MSB
 layout(location = 1) in uint aTexturePackedData;
 
@@ -48,17 +48,42 @@ vec3 hsv2rgb(vec3 c) {
 }
 
 uint getTextureId(uint blockId, uint faceId) {
+    // Grass
     if (blockId == 0u) {
         return 0u;
     }
+    // Stone
     else if (blockId == 1u) {
         return 1u;
     }
+    // Dirt
     else if (blockId == 2u) {
         return 2u;
-    } else if (blockId == 3u) {
+    }
+    // Grass dirt
+    else if (blockId == 3u) {
         if (faceId == FACE_TOP) return 0u;
         return 3u;
+    }
+    // Log
+    else if (blockId == 4u) {
+        return 4u;
+    }
+    // Snow
+    else if (blockId == 14u) {
+        return 14u;
+    }
+    // lava
+    else if (blockId == 254u) {
+        return 254u;
+    }
+    // Water
+    else if (blockId == 67u) {
+        return 67u;
+    }
+    // Leaves
+    else if (blockId == 52u) {
+        return 52u;
     }
 
     return 0u;
@@ -73,7 +98,7 @@ void main(void) {
     uint faceId  = aChunkLocalPackedData & 0x07u;
 
     uint cornerId = (aTexturePackedData >> 30u) & 0x3u;
-    uint blockId = (aTexturePackedData >> 23u) & 0x7Fu;
+    uint blockId = (aTexturePackedData >> 22u) & 0xFFu;
     blockId -= 1u;
 
     uint textureId = getTextureId(blockId, faceId);

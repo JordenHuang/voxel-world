@@ -13,12 +13,15 @@ import * as Scheduler from "./scheduler";
 import { GameRenderer } from "./renderer";
 import { ChunkRenderPass } from "./render-passes/chunk-render-pass";
 import { BlockMarkerRenderPass } from "./render-passes/block-marker-render-pass";
+import { CrosschairRenderPass } from "./render-passes/crosschair-render-pass";
 
 import { Shader } from "./shader";
 import vsSource from "./shaders/block.vert?raw";
 import fsSource from "./shaders/block.frag?raw";
 import blockMarkerVS from "./shaders/marker.vert?raw";
 import blockMarkerFS from "./shaders/marker.frag?raw";
+import crosschairVS from "./shaders/crosschair.vert?raw";
+import crosschairFS from "./shaders/crosschair.frag?raw";
 
 import { SlidingFpsAverage } from "./fps";
 
@@ -65,6 +68,7 @@ export class Game {
 
   private blockShader: Shader;
   private blockMarkerShader: Shader;
+  private crosschairShader: Shader;
 
   private player: Entity;
   private camera: Entity;
@@ -111,25 +115,28 @@ export class Game {
     // Resources
     this.blockShader = new Shader(this.gl, vsSource, fsSource);
     this.blockMarkerShader = new Shader(this.gl, blockMarkerVS, blockMarkerFS);
+    this.crosschairShader = new Shader(this.gl, crosschairVS, crosschairFS);
 
     const worldOptions = {
       CHUNK_HEIGHT: 32,
       CHUNK_SIZE: 16,
       RENDER_DISTANCE: 8,
+      // seed: 0, // Seed is not used in chunk builders
     };
     this.world = Entities.createMainWorld(this.ecs, worldOptions);
 
     this.player = Entities.createPlayer(this.ecs, {
       isMainPlayer: true,
       worldId: this.world,
+      position: {value: vec3.fromValues(0, 100, 0)},
     });
     this.camera = Entities.createCamera(this.ecs, {
       aspectRatio: this.canvas.width / this.canvas.height,
       targetEntityId: this.player,
+      position: {value: vec3.fromValues(0, 100, 0)},
       isMainCamera: true,
     } as Entities.CameraOptions);
 
-    const seed = 0;
     // let texture = loadTexture(this.gl, "./assets/frame.png");
     let texture = loadTexture(this.gl, "./assets/terrain.png");
 
@@ -147,7 +154,7 @@ export class Game {
     this.cameraSystem = new Systems.CameraSystem(this.ecs, this.eventBus);
 
     this.worldSystem = new Systems.WorldSystem(this.ecs, this.eventBus);
-    this.OverworldChunkBuilder = new Systems.OverworldChunkBuilder(this.ecs, this.eventBus, seed);
+    this.OverworldChunkBuilder = new Systems.OverworldChunkBuilder(this.ecs, this.eventBus);
     this.chunkMeshBuilder = new Systems.ChunkMeshBuilder(this.ecs, this.eventBus, this.gl);
 
     this.frustumCullingSystem = new Systems.FrustumCullingSystem(this.ecs, this.eventBus);
@@ -170,6 +177,7 @@ export class Game {
     this.renderer = new GameRenderer(this.eventBus, this.canvas, this.gl);
     this.renderer.addPass(new ChunkRenderPass(this.gl, this.blockShader, texture));
     this.renderer.addPass(new BlockMarkerRenderPass(this.gl, this.blockMarkerShader));
+    this.renderer.addPass(new CrosschairRenderPass(this.gl, this.crosschairShader));
   }
 
   private gameLoop(timestamp: number, texture: WebGLTexture) {
