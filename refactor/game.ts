@@ -93,7 +93,7 @@ export class Game {
   private fpsAverage: SlidingFpsAverage;
 
   constructor() {
-    this.canvas = document.getElementById("game-canvas") as HTMLCanvasElement;
+    this.canvas = document.getElementById("refactor-game-canvas") as HTMLCanvasElement;
     if (this.canvas === null) {
       throw new Error("Unable to locate canvas element.");
     }
@@ -103,7 +103,7 @@ export class Game {
       throw new Error("Unable to initialize WebGL. Your browser or machine may not support it.");
     }
 
-    this.fpsLabel = document.getElementById("fps-label") as HTMLElement;
+    this.fpsLabel = document.getElementById("refactor-fps-label") as HTMLElement;
     this.fpsAverage = new SlidingFpsAverage(10);
 
     this.ecs = new ECS();
@@ -146,7 +146,7 @@ export class Game {
     }
 
     // Systems
-    this.inputSystem = new Systems.InputSystem(this.ecs, this.eventBus);
+    this.inputSystem = new Systems.InputSystem(this.ecs, this.eventBus, this.canvas);
     this.playerControlSystem = new Systems.PlayerControlSystem(this.ecs, this.eventBus);
     this.playerInteractionSystem = new Systems.PlayerInteractionSystem(this.ecs, this.eventBus);
     this.movementSystem = new Systems.MovementSystem(this.ecs);

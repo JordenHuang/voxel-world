@@ -20,11 +20,11 @@ export class InputSystem implements System {
   public mouseDeltaX: number = 0;
   public mouseDeltaY: number = 0;
 
-  constructor(ecs: ECS, eventBus: EventBus) {
+  constructor(ecs: ECS, eventBus: EventBus, canvas: HTMLCanvasElement) {
     this.ecs = ecs;
     this.eventBus = eventBus;
 
-    this.setupEventListeners();
+    this.setupEventListeners(canvas);
     this.setupSubscriptions();
   }
 
@@ -32,7 +32,7 @@ export class InputSystem implements System {
     // this.eventBus.on("MOUSE_MOVED", (data) => this.handleMouseMovement(data.deltaX, data.deltaY));
   }
 
-  private setupEventListeners() {
+  private setupEventListeners(canvas: HTMLCanvasElement) {
     // https://stackoverflow.com/questions/24764626/any-way-to-prevent-disable-ctrl-key-shortcuts-in-the-browser
     window.addEventListener("onbeforeunload", (e) => {
       e.preventDefault();
@@ -54,24 +54,24 @@ export class InputSystem implements System {
 
     // 監聽滑鼠移動 (當 Pointer Lock 啟動時)
     window.addEventListener("mousemove", (e) => {
-      if (this.isPointerLocked()) {
+      if (/*this.isPointerLocked()*/ e.target === canvas) {
         // When cursor locked
         this.mouseDeltaX += e.movementX;
         this.mouseDeltaY += e.movementY;
       }
-      else {
-        // When cursor not locked
-        this.pmouseX = this.mouseX;
-        this.pmouseY = this.mouseY;
-        this.mouseX = e.clientX;
-        this.mouseY = e.clientY;
-
-        if (Math.abs(this.mouseX - this.pmouseX) > 100) this.pmouseX = this.mouseX;
-        if (Math.abs(this.mouseY - this.pmouseY) > 100) this.pmouseY = this.mouseY;
-
-        this.mouseDeltaX = this.mouseX - this.pmouseX;
-        this.mouseDeltaY = this.mouseY - this.pmouseY;
-      }
+      // else {
+      //   // When cursor not locked
+      //   this.pmouseX = this.mouseX;
+      //   this.pmouseY = this.mouseY;
+      //   this.mouseX = e.clientX;
+      //   this.mouseY = e.clientY;
+      //
+      //   if (Math.abs(this.mouseX - this.pmouseX) > 100) this.pmouseX = this.mouseX;
+      //   if (Math.abs(this.mouseY - this.pmouseY) > 100) this.pmouseY = this.mouseY;
+      //
+      //   this.mouseDeltaX = this.mouseX - this.pmouseX;
+      //   this.mouseDeltaY = this.mouseY - this.pmouseY;
+      // }
     });
 
     window.addEventListener("mousedown", (e) => {

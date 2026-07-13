@@ -8,12 +8,43 @@
     :fullscreen {
     background-color: white;
     }
+    .canvas-row {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    }
     </style>
   </head>
   <body>
-    <p id="fps-label"></p>
-    <canvas id="game-canvas" width="800" height="600"></canvas>
-    <!-- <script src="/src/main.ts" type="module"></script> -->
-    <script src="/refactor/main.ts" type="module"></script>
+    <div>
+      <p>
+        Minecraft-like voxel game using TypeScript and WebGL.
+        <br>
+        The left one is the original one. The right one uses custom ECS architecture,
+        though I should use an existing engine, as mine is quite bad.
+      </p>
+
+      <ul>
+        <li>w/a/s/d: Move forward/left/backward/right</li>
+        <li>r: Reset</li>
+        <li>Space: Move up</li>
+        <li>Left Shift: Move down</li>
+        <li>Left Control: Speed up (can jump multiple times in the ECS one)</li>
+      </ul>
+
+      <div class="canvas-row">
+        <div style="display:inline-block; vertical-align:top;">
+          <p id="fps-label"></p>
+          <canvas id="game-canvas" width="400" height="300"></canvas>
+          <script src="/src/main.ts" type="module"></script>
+        </div>
+
+        <div style="display:inline-block; vertical-align:top;">
+          <p id="refactor-fps-label"></p>
+          <canvas id="refactor-game-canvas" width="400" height="300"></canvas>
+          <script src="/refactor/main.ts" type="module"></script>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

@@ -36,26 +36,24 @@ export class InputManager {
     });
     window.addEventListener("keyup", (e) => this.keys[e.code] = false);
 
-    // 監聽滑鼠移動 (當 Pointer Lock 啟動時)
     window.addEventListener("mousemove", (e) => {
-      if (this.isPointerLocked() || document.fullscreenEnabled === true) {
-        // When cursor locked
+      if (/* this.isPointerLocked() && this.isFullScreen() */ e.target == this.canvas) {
         this.mouseDeltaX += e.movementX;
         this.mouseDeltaY += e.movementY;
       }
-      else {
-        // When cursor not locked
-        this.pmouseX = this.mouseX;
-        this.pmouseY = this.mouseY;
-        this.mouseX = e.clientX;
-        this.mouseY = e.clientY;
-
-        if (Math.abs(this.mouseX - this.pmouseX) > 100) this.pmouseX = this.mouseX;
-        if (Math.abs(this.mouseY - this.pmouseY) > 100) this.pmouseY = this.mouseY;
-
-        this.mouseDeltaX = this.mouseX - this.pmouseX;
-        this.mouseDeltaY = this.mouseY - this.pmouseY;
-      }
+      // else {
+      //   // When cursor not locked
+      //   this.pmouseX = this.mouseX;
+      //   this.pmouseY = this.mouseY;
+      //   this.mouseX = e.clientX;
+      //   this.mouseY = e.clientY;
+      //
+      //   if (Math.abs(this.mouseX - this.pmouseX) > 100) this.pmouseX = this.mouseX;
+      //   if (Math.abs(this.mouseY - this.pmouseY) > 100) this.pmouseY = this.mouseY;
+      //
+      //   this.mouseDeltaX = this.mouseX - this.pmouseX;
+      //   this.mouseDeltaY = this.mouseY - this.pmouseY;
+      // }
     });
 
     window.addEventListener("mousedown", (e) => {
@@ -128,6 +126,6 @@ export class InputManager {
     return document.pointerLockElement === this.canvas;
   }
   public isFullScreen(): boolean {
-    return document.fullscreenElement !== null;
+    return document.fullscreenElement === this.canvas;
   }
 }
