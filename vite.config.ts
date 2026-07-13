@@ -6,4 +6,5 @@ export default defineConfig({
       usePolling: true,
     },
   },
+  base: "/voxel-world/",
 })
